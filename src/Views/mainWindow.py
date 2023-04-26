@@ -1,6 +1,4 @@
 import PySimpleGUI as sg
-import os
-
 
 
 class MainWindow:
@@ -15,8 +13,8 @@ class MainWindow:
         self.command_prompt = sg.Text(key='command_prompt')
         self.command_arguments = sg.InputText(key='command_arguments')
 
-
-    def get_title(self):
+    @staticmethod
+    def get_title():
         return 'ASP-T CMD Prompt'
 
     def set_toolbar_layout(self):
@@ -42,5 +40,3 @@ class MainWindow:
     def create_window(self):
         return sg.Window(title=self.get_title(), layout=self.build_layout(), no_titlebar=True, grab_anywhere=True,
                          keep_on_top=True, modal=True)
-
-
