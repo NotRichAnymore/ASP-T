@@ -24,7 +24,7 @@ class MainWindow:
                                      key='exit_button')
 
         self.console_window = sg.Output(expand_x=True, expand_y=True, echo_stdout_stderr=True,
-                                    key='output_screen')
+                                        key='output_screen')
 
         self.command_prompt = sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
                                       font=('Commodore 64 Angled', '8'), key='command_prompt')
@@ -61,15 +61,3 @@ class MainWindow:
     def create_window(self):
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(1000, 700), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
-
-
-def main():
-    sg.theme('SystemDefault')
-    main_window = MainWindow().create_window()
-    while True:
-        event, values = main_window.read()
-        print(event, values)
-
-
-if __name__ == '__main__':
-    main()
