@@ -187,3 +187,7 @@ def initialise_images(directory):
             return False
     except FileNotFoundError:
         os.mkdir(directory)
+
+
+def create_error_message(error_type, message, error_message):
+    return f'Error Type: {error_type}, {message} \nError Message: {error_message}'

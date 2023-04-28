@@ -9,19 +9,19 @@ class MainWindow:
 
         self.settings_button = sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
                                          image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\settings_icon.png',
-                                         pad=((660, 0), (0, 0)), key='settings_button')
+                                         pad=((660, 0), (0, 0)), key='main_window_settings_button')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\minimise_icon.png',
-                                         key='minimise_button')
+                                         key='main_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\maximise_icon.png',
-                                         key='maximise_button')
+                                         key='main_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                                      image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\exit_icon.png',
-                                     key='exit_button')
+                                     button_color='red', key='main_window_exit_button')
 
         self.console_window = sg.Output(expand_x=True, expand_y=True, echo_stdout_stderr=True,
                                         key='output_screen')
@@ -61,3 +61,6 @@ class MainWindow:
     def create_window(self):
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(1000, 700), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
+
+    def run_window(self):
+        return self.create_window()

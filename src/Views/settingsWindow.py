@@ -4,23 +4,20 @@ import PySimpleGUI as sg
 class SettingsWindow:
 
     def __init__(self):
-        self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'), key='program_title')
-
-        self.settings_button = sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
-                                         image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\settings_icon.png',
-                                         pad=((660, 0), (0, 0)), key='settings_button')
+        self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
+                                  key='settings_window_title')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\minimise_icon.png',
-                                         key='minimise_button')
+                                         pad=((44, 0), (0, 0)), key='settings_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\maximise_icon.png',
-                                         key='maximise_button')
+                                         key='settings_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                                      image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\exit_icon.png',
-                                     key='exit_button')
+                                     button_color='red', key='settings_window_exit_button')
 
         self.theme_text = sg.Text('Theme: ')
         self.chosen_theme_text = sg.Text(sg.theme(), key='program_theme')
@@ -28,7 +25,7 @@ class SettingsWindow:
                                       key='program_theme_button')
 
         self.save_folder = sg.Text('Save Folder: ')
-        self.save_folder_input = sg.Input(default_text='', key='save_folder_input')
+        self.save_folder_input = sg.Input(default_text='', expand_x=True, key='save_folder_input')
         self.save_folder_button = sg.Button('Select Folder', expand_x=True, key='select_folder_button')
 
     @staticmethod
@@ -36,7 +33,7 @@ class SettingsWindow:
         return 'ASP-T CMD Prompt (Settings)'
 
     def set_toolbar_layout(self):
-        layout = self.title_text, self.settings_button, self.minimise_button, self.maximise_button, self.exit_button
+        layout = self.title_text, self.minimise_button, self.maximise_button, self.exit_button
         return layout
 
     def set_system_tab(self):
@@ -59,7 +56,7 @@ class SettingsWindow:
         layout = sg.TabGroup([
             [self.set_system_tab()],
             [self.set_files_tab()]
-        ])
+        ], expand_x=True)
         return layout
 
     def build_layout(self):
@@ -70,16 +67,8 @@ class SettingsWindow:
         return layout
 
     def create_window(self):
-        return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(380, 500), no_titlebar=True,
+        return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(535, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-
-def main():
-    sg.theme('SystemDefault')
-    main_window = SettingsWindow().create_window()
-    while True:
-        event, values = main_window.read()
-        print(event, values)
-
-if __name__ == '__main__':
-    main()
+    def run_window(self):
+        return self.create_window()
