@@ -21,6 +21,17 @@ class CommandController:
                                         error_message=str(fNfE))
 
     @staticmethod
+    def get_valid_arguments():
+        try:
+            arguments_list = {}
+            with open('src/Files/command_arguments_list.json') as file:
+                arguments_list.update(json.load(file))
+            return arguments_list
+        except FileNotFoundError as fNfE:
+            return create_error_message(error_type='file', message='Unable to obtain valid arguments',
+                                        error_message=str(fNfE))
+
+    @staticmethod
     def get_valid_options():
         try:
             options_list = {}
@@ -41,6 +52,21 @@ class CommandController:
                     raise IOError
         except IOError as ioe:
             return create_error_message(error_type='parse', message='Valid command not found', error_message=str(ioe))
+
+    def parse_arguments(self):
+        command_name = self.command.get_command_name()
+        valid_command_arguments = self.get_valid_arguments()
+        try:
+            for command_name_file in valid_command_arguments.keys():
+                if command_name == command_name_file:
+                    file_arguments = valid_command_arguments[command_name]
+                    return file_arguments
+                else:
+                    raise IOError
+        except IOError as ioe:
+            return create_error_message(error_type='parse', message=f'Unable to get arguments for {command_name}', error_message=str(ioe))
+
+
 
     def parse_option(self, user_defined_options):
         try:
