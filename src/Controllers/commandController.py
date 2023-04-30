@@ -8,6 +8,12 @@ class CommandController:
 
     def __init__(self):
         self.command = commands.Command(None)
+        self.command_list_path = 'src/Files/command_list.json'
+        self.arguments_list_path = 'src/Files/command_arguments_list.json'
+        self.options_list_path = 'src/Files/command_options_list.json'
+
+    def get_paths(self):
+        return [self.command_list_path, self.arguments_list_path, self.options_list_path]
 
     @staticmethod
     def get_valid_commands():
@@ -35,7 +41,7 @@ class CommandController:
     def get_valid_options():
         try:
             options_list = {}
-            with open(f'src/Files/command_options_list.json') as file:
+            with open('src/Files/command_options_list.json') as file:
                 options_list.update(json.load(file))
             return options_list
         except FileNotFoundError as fNfE:

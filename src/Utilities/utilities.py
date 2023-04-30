@@ -142,6 +142,18 @@ def get_new_unit_test_paths():
     return scripts
 
 
+def get_all_json_files():
+    files = []
+    rootdir = Path(__file__).resolve().parent.parent.parent
+    for dirpath, dirnames, filenames in os.walk(rootdir):
+        if '\\src\\' in dirpath:
+            for file in filenames:
+                if '.json' == Path(file).suffix:
+                    if os.path.join(dirpath, file) not in files:
+                        files.append(os.path.join(dirpath, file))
+    return files
+
+
 # Base 64 Operations
 # - Encoding
 def image_to_base64(directory, icon_names):
