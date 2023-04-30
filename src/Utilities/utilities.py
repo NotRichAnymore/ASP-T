@@ -126,11 +126,23 @@ def get_filename_from_path(file_path):
     return filename
 
 
-#
+def get_new_unit_test_paths():
+    scripts = []
+    rootdir = Path(__file__).resolve().parent.parent.parent
+    directories_to_exclude = ['Files', 'Images', 'Tests']
+    for dirpath, dirnames, filenames in os.walk(rootdir):
+        for directory in directories_to_exclude:
+            if '\\src\\' in dirpath and directory not in dirpath:
+                for file in filenames:
+                    if os.path.exists(os.path.join(dirpath, os.path.join('test_' + file))):
+                        continue
+                    if '.py' == Path(file).suffix:
+                        if os.path.join(dirpath, file) not in scripts:
+                            scripts.append(os.path.join(dirpath, file))
+    return scripts
 
 
 # Base 64 Operations
-
 # - Encoding
 def image_to_base64(directory, icon_names):
     base64Icons = []
