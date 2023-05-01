@@ -129,7 +129,7 @@ def get_filename_from_path(file_path):
 def get_new_unit_test_paths():
     scripts = []
     rootdir = Path(__file__).resolve().parent.parent.parent
-    directories_to_exclude = ['Files', 'Images', 'Tests']
+    directories_to_exclude = ['Files', 'Images', 'test']
     for dirpath, dirnames, filenames in os.walk(rootdir):
         for directory in directories_to_exclude:
             if '\\src\\' in dirpath and directory not in dirpath:

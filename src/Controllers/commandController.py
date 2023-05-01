@@ -1,6 +1,7 @@
 import re
 from src.Models.Commands import commands
 from src.Utilities.utilities import create_error_message
+from pathlib import Path
 import json
 
 
@@ -8,9 +9,9 @@ class CommandController:
 
     def __init__(self):
         self.command = commands.Command(None)
-        self.command_list_path = 'src/Files/command_list.json'
-        self.arguments_list_path = 'src/Files/command_arguments_list.json'
-        self.options_list_path = 'src/Files/command_options_list.json'
+        self.command_list_path = Path('src/data/files/command_list.json').resolve()
+        self.arguments_list_path = Path('src/data/files/command_arguments_list.json').resolve()
+        self.options_list_path = Path('src/data/files/command_options_list.json').resolve()
 
     def get_paths(self):
         return [self.command_list_path, self.arguments_list_path, self.options_list_path]
@@ -19,7 +20,7 @@ class CommandController:
     def get_valid_commands():
         try:
             command_list = {}
-            with open('src/Files/command_list.json') as file:
+            with open('src/data/files/command_list.json') as file:
                 command_list.update(json.load(file))
             return command_list
         except FileNotFoundError as fNfE:
@@ -30,7 +31,7 @@ class CommandController:
     def get_valid_arguments():
         try:
             arguments_list = {}
-            with open('src/Files/command_arguments_list.json') as file:
+            with open('src/data/files/command_arguments_list.json') as file:
                 arguments_list.update(json.load(file))
             return arguments_list
         except FileNotFoundError as fNfE:
@@ -41,7 +42,7 @@ class CommandController:
     def get_valid_options():
         try:
             options_list = {}
-            with open('src/Files/command_options_list.json') as file:
+            with open('src/data/files/command_options_list.json') as file:
                 options_list.update(json.load(file))
             return options_list
         except FileNotFoundError as fNfE:
