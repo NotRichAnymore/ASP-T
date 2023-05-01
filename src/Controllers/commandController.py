@@ -125,6 +125,6 @@ class CommandController:
                                 if valid_option == len(chosen_options):
                                     return chosen_options
 
-        except (IOError, IndexError) as (ioe, ine):
+        except (IOError, IndexError) as e:
             return create_error_message(error_type='parse', message=f'Options {user_defined_options} are not valid',
-                                        error_message=str(ioe))
+                                        error_message=str(e))
