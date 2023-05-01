@@ -25,6 +25,7 @@ class TestManager:
 
         return scripts
 
+    @pysnooper.snoop()
     def controller_suites(self):
         test_suite = unittest.TestSuite()
         controller_suites = self.get_test_suites_modules()
@@ -36,19 +37,17 @@ class TestManager:
             spec.loader.exec_module(module)
 
             module_contents = dir(module)
-            classes = [getattr(module, ele) for ele in module_contents
-                       if Path(suite_name).stem.lower() in ele.lower()]
+            classes = [getattr(module, ele) for ele in module_contents if ele.startswith('Test')]
 
             main_class = classes[0]
             sub_classes = classes[1:]
-            print(classes)
-            print(main_class)
-            print(sub_classes)
+            # for sub_class in sub_classes:
+            #    print(dir(sub_class))
 
-
-
-            test_suite.addTest(mod.__class__(suite_name))
+            # print(main_class, sub_classes)
+            # test_suite.addTest()
             # .get_test_cases()
+            # and Path(suite_name).stem.lower() in ele.lower()
 
         return test_suite
 
