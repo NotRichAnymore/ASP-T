@@ -4,7 +4,7 @@ import unittest
 import mock
 from unittest.mock import patch, mock_open
 from pathlib import Path
-from src.Utilities.utilities import get_all_json_files
+from src.Utilities.utilities import get_all_json_files, get_json_object_from_file
 from src.Controllers.commandController import CommandController
 
 
@@ -33,11 +33,16 @@ class TestFileObjects(unittest.TestCase):
     def test_file_is_json(self):
         json_list = get_all_json_files()
         expected_result = isinstance({}, dict)
-        for file in json_list:
-            with open(file, 'r') as json_file:
-                actual_result = json.load(json_file)
-
+        actual_result = get_json_object_from_file
         self.assertEqual(expected_result, isinstance(actual_result, dict))
+
+        # def get_json_object_from_file(file_path):
+        #     jsonObject = {}
+        #     with open(file_path, "r") as file:
+        #         for obj in file:
+        #             jsonDict = json.loads(obj)
+        #             jsonObject = jsonDict
+        #     return jsonObject
 
 if __name__ == '__main__':
     unittest.main()

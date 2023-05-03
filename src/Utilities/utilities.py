@@ -112,12 +112,22 @@ def remove_null_rows(file_path):
 
 # Json Format
 def get_json_object_from_file(file_path):
-    jsonObject = {}
     with open(file_path, "r") as file:
-        for obj in file:
-            jsonDict = json.loads(obj)
-            jsonObject = jsonDict
-    return jsonObject
+        jsonObj = json.load(file)
+        for key in jsonObj:
+            jsonDict = dict.fromkeys((key for key in jsonObj), jsonObj[key])
+        return jsonDict
+
+
+def get_json_objects_from_multiple_files(file_paths):
+    objects_received = False
+    json_objs = []
+    while not objects_received:
+        json_objs = [(get_json_object_from_file(path) for path in range(len(file_paths)))]
+        if len(json_objs) == len(file_paths):
+            objects_received = True
+    return json_objs
+
 
 
 # From Paths
