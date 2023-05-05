@@ -12,15 +12,15 @@ class SettingsWindow:
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
-                                         key='main_window_minimise_button')
+                                         key='settings_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('maximise_icon.png').as_posix(),
-                                         key='main_window_maximise_button')
+                                         key='settings_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                                      image_filename=Path(image_folder).joinpath('exit_icon.png').as_posix(),
-                                     button_color='red', key='main_window_exit_button')
+                                     button_color='red', key='settings_window_exit_button')
 
         self.theme_text = sg.Text('Theme: ')
         self.chosen_theme_text = sg.Text(sg.theme(), key='program_theme')
@@ -30,6 +30,7 @@ class SettingsWindow:
         self.save_folder = sg.Text('Save Folder: ')
         self.save_folder_input = sg.Input(default_text='', expand_x=True, key='save_folder_input')
         self.save_folder_button = sg.Button('Select Folder', expand_x=True, key='select_folder_button')
+        self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button')
 
     @staticmethod
     def get_title():
@@ -50,7 +51,8 @@ class SettingsWindow:
     def set_files_tab(self):
         tab_layout = [
             [self.save_folder, self.save_folder_input],
-            [self.save_folder_button]
+            [self.save_folder_button],
+            [self.load_user_details_button]
         ]
         layout = sg.Tab('Files', tab_layout, key='files_tab')
         return layout
