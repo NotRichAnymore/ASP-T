@@ -3,7 +3,7 @@
 	"clear":"None",
 	"history":"None",
 	"date":"format",
-	"sleep":["seconds","mintues","hours","days"],
+	"sleep":["seconds","minutes","hours","days"],
 	"uptime":"None",
 	"id":"user_name; user_id",
 	"groups":"user_name",

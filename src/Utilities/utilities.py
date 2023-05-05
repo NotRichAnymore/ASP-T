@@ -123,11 +123,10 @@ def get_json_objects_from_multiple_files(file_paths):
     objects_received = False
     json_objs = []
     while not objects_received:
-        json_objs = [(get_json_object_from_file(path) for path in range(len(file_paths)))]
+        json_objs = [(get_json_object_from_file(path) for path in file_paths)]
         if len(json_objs) == len(file_paths):
             objects_received = True
     return json_objs
-
 
 
 # From Paths
@@ -156,7 +155,7 @@ def get_all_json_files():
     files = []
     rootdir = Path(__file__).resolve().parent.parent.parent
     for dirpath, dirnames, filenames in os.walk(rootdir):
-        if '\\src\\' in dirpath:
+        if '\\src\\files' in dirpath:
             for file in filenames:
                 if '.json' == Path(file).suffix:
                     if os.path.join(dirpath, file) not in files:

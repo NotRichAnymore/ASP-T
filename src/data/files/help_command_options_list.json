@@ -15,7 +15,7 @@
 	"rm":["Remove directories and contents recursively","print prompt before removing file or directory","Force -ignores warnings"], 
 	"mv":["Make a backup of the file before copying", "Print extra info to stdout",  "If unable to copy, attemept to recreate file", "Do not overwrite existing file", "copies a directory and all it's contents", "append suffix to each backup file", "prints file name before copying", "all existing files in destination replaced", "no files in destination replaced", "files older than source file will be replaced", "Specify the destination directory"],
 	"chmod":["Describe the action for each file whose perms change", "no error message printed for unchangeable files", "Describe each action or non-action for every file", "Change permissions of directories and subsidiaries"],
-	"chown":"None"["Describe the action for each file whose perms change", "no error message printed for unchangeable files", "Describe each action or non-action for every file", "Change permissions of directories and subsidiaries"],
+	"chown":["Describe the action for each file whose perms change", "no error message printed for unchangeable files", "Describe each action or non-action for every file", "Change permissions of directories and subsidiaries"],
 	"cat":"Display index for each line",
 	"more":"None",
 	"less":"None",

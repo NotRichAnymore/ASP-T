@@ -3,6 +3,7 @@ class Command:
         self.command_name = cmd_name
         self.arguments = args
         self.options = opts
+        self.cmd_type = None
 
     def set_command_name(self, cmd_name):
         self.command_name = cmd_name
@@ -21,6 +22,12 @@ class Command:
 
     def get_command_options(self):
         return self.options
+
+    def set_command_type(self, typ):
+        self.cmd_type = typ
+
+    def get_command_type(self):
+        return self.cmd_type
 
 
 
