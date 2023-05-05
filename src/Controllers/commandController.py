@@ -11,11 +11,20 @@ class CommandController:
 
     def __init__(self):
         self.command = commands.Command(None)
-        self.command_list_path = Path('src/data/files/command_list.json').resolve()
-        self.arguments_list_path = Path('src/data/files/command_arguments_list.json').resolve()
-        self.options_list_path = Path('src/data/files/command_options_list.json').resolve()
-        self.user_list_path = Path('src/data/files/users.json').resolve()
-        self.permissions_list = Path('src/data/files/permissions.json').resolve()
+        self.command_list_path = Path('src').resolve().parent\
+            .joinpath('data/files/command_list.json').as_posix()
+
+        self.arguments_list_path = Path('src').resolve().parent\
+            .joinpath('data/files/command_arguments_list.json').as_posix()
+
+        self.options_list_path = Path('src').resolve()\
+            .parent.joinpath('data/files/command_options_list.json').as_posix()
+
+        self.user_list_path = Path('src').resolve()\
+            .parent.joinpath('data/files/users.json').as_posix()
+
+        self.permissions_list_path = Path('src').resolve()\
+            .parent.joinpath('data/files/permissions.json').as_posix()
 
     def get_command_paths(self):
         return [self.command_list_path, self.arguments_list_path, self.options_list_path]
@@ -60,8 +69,19 @@ class CommandController:
                 users_list.update(json.load(file))
             return users_list
         except FileNotFoundError as fNfE:
-            return create_error_message(error_type='file', message='Unable to obtain valid options',
+            return create_error_message(error_type='file', message='Unable to obtain user list',
                                         error_message=str(fNfE))
+        
+    def get_permissions_list(self):
+        try:
+            permissionss_list = {}
+            with open(self.permissions_list_path) as file:
+                permissionss_list.update(json.load(file))
+            return permissionss_list
+        except FileNotFoundError as fNfE:
+            return create_error_message(error_type='file', message='Unable to obtain permissions list',
+                                        error_message=str(fNfE))
+        
 
     def valid_date_format(self, date_format):
         try:
@@ -125,31 +145,28 @@ class CommandController:
                                     if user_args == 'am i':
                                         valid_user_args = True
                                 case 'ls':
-                                        if Path(user_args).is_dir():
-                                            valid_user_args = True
+                                    if Path(user_args).is_dir():
+                                        valid_user_args = True
                                 case 'cp':
-                                        if Path(user_args[0]).exists() and Path(user_args[1]).exists():
-                                            valid_user_args = True
+                                    if Path(user_args[0]).exists() and Path(user_args[1]).exists():
+                                        valid_user_args = True
                                 case ['rm', 'cat', 'more', 'head', 'less', 'tail']:
                                     if Path(user_args).is_file():
                                         valid_user_args = True
                                 case 'mv':
-                                        if (Path(user_args[0]).is_file() and Path(user_args[1]).is_file()) or\
-                                                (Path(user_args[0]).is_file() and Path(user_args[1]).is_dir()):
-                                            valid_user_args = True
+                                    if (Path(user_args[0]).is_file() and Path(user_args[1]).is_file()) or\
+                                            (Path(user_args[0]).is_file() and Path(user_args[1]).is_dir()):
+                                        valid_user_args = True
                                 case ['chown', 'chmod']:
-                                    
-                                        if user_args[0] in self.get_valid_permissions and (Path(user_args[1]).is_file()
-                                                                                  or Path(user_args[1]).is_file()):
-                                            valid_user_args = True
+                                    if user_args[0] in self.get_permissions_list and \
+                                            (Path(user_args[1]).is_file() or Path(user_args[1]).is_file()):
+                                        valid_user_args = True
                                 case 'grep':
-                                    
-                                        if isinstance(user_args[0], str) and Path(user_args[1]).is_file():
-                                            valid_user_args = True
+                                    if isinstance(user_args[0], str) and Path(user_args[1]).is_file():
+                                        valid_user_args = True
                                 case 'ln':
-                                    
-                                        if Path(user_args[0]).is_absolute() and isinstance(user_args[1], str):
-                                            valid_user_args = True
+                                    if Path(user_args[0]).is_absolute() and isinstance(user_args[1], str):
+                                        valid_user_args = True
                                 case ['mkdir', 'rmdir']:
                                     if Path(user_args).is_dir():
                                         valid_user_args = True
