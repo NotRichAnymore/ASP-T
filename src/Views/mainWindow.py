@@ -31,9 +31,9 @@ class MainWindow:
                                         font=('Commodore 64 Angled', '12'), key='output_screen')
 
         self.command_prompt = sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
-                                      font=('Commodore 64 Angled', '8'), key='command_prompt')
+                                      font=('Commodore 64 Angled', '10'), key='command_prompt')
 
-        self.command_arguments = sg.Input(expand_x=True, font=('Commodore 64 Angled', '8'),
+        self.command_arguments = sg.Input(expand_x=True, font=('Commodore 64 Angled', '10'),
                                           background_color=sg.theme_background_color(),
                                           text_color=sg.theme_input_text_color(), do_not_clear=False,
                                           key='command_arguments')
