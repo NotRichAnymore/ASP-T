@@ -1,23 +1,26 @@
 import PySimpleGUI as sg
+import os.path
+from pathlib import Path
 
 
 class SettingsWindow:
 
     def __init__(self):
+        self.image_folder = Path('src/data/images').resolve().as_posix()
         self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
                                   key='settings_window_title')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\minimise_icon.png',
-                                         pad=((44, 0), (0, 0)), key='settings_window_minimise_button')
+                                         image_filename=os.path.join(self.image_folder, '\\minimise_icon.png'),
+                                         key='main_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\maximise_icon.png',
-                                         key='settings_window_maximise_button')
+                                         image_filename=os.path.join(self.image_folder, '\\maximise_icon.png'),
+                                         key='main_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
-                                     image_filename=r'C:\Users\tyres\Documents\ASP-T\src\Images\exit_icon.png',
-                                     button_color='red', key='settings_window_exit_button')
+                                     image_filename=os.path.join(self.image_folder, '\\exit_icon.png'),
+                                     button_color='red', key='main_window_exit_button')
 
         self.theme_text = sg.Text('Theme: ')
         self.chosen_theme_text = sg.Text(sg.theme(), key='program_theme')
