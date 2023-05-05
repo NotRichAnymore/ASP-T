@@ -59,25 +59,10 @@ class MainController:
                         self.run_settings_window()
                         # un hide the main menu on settings window completion
                         main_window.un_hide()
+
+                    case 'load_input_button':
+                        command_arguments = values['command_arguments']
+                        print(command_arguments)
+
         except Exception as e:
             print(e)
-# from src.Controllers import shellCommandController, directoryCommandController, fileCommandController, \
-#     powerCommandController, processCommandController, textFileComamandController, timeAndDateCommandController, \
-#     userCommandController
-# match cmd_type:
-#             case 'shell':
-#                 self.shellCommandController.load_command(command)
-#             case 'time_and_date':
-#                 timeAndDateCommandController.TimeAndDateCommandController()
-#             case 'user':
-#                 userCommandController.UserCommandController()
-#             case 'file_ops':
-#                 fileCommandController.FileCommandController()
-#             case 'text_file_ops':
-#                 textFileComamandController.TextFileCommandController()
-#             case 'directory':
-#                 directoryCommandController.DirectoryCommandController()
-#             case 'power':
-#                 powerCommandController.PowerCommandController()
-#             case 'process':
-#                 processCommandController.ProcesssCommandController()

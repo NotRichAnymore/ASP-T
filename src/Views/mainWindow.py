@@ -28,7 +28,7 @@ class MainWindow:
                                      button_color='red', key='main_window_exit_button')
 
         self.console_window = sg.Output(expand_x=True, expand_y=True, echo_stdout_stderr=True,
-                                        key='output_screen')
+                                        font=('Commodore 64 Angled', '12'), key='output_screen')
 
         self.command_prompt = sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
                                       font=('Commodore 64 Angled', '8'), key='command_prompt')
@@ -37,6 +37,8 @@ class MainWindow:
                                           background_color=sg.theme_background_color(),
                                           text_color=sg.theme_input_text_color(), do_not_clear=False,
                                           key='command_arguments')
+
+        self.load_input_button = sg.Button(visible=False, bind_return_key=True, key='load_input_button')
 
     @staticmethod
     def get_title():
@@ -51,7 +53,7 @@ class MainWindow:
         return layout
 
     def set_input_bar(self):
-        layout = self.command_prompt, self.command_arguments
+        layout = self.command_prompt, self.command_arguments, self.load_input_button
         return layout
 
     def build_layout(self):
