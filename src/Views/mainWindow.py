@@ -8,23 +8,23 @@ from pathlib import Path
 class MainWindow:
 
     def __init__(self):
-        self.image_folder = Path('src/data/images').resolve().as_posix()
+        image_folder = Path('src').resolve().parent.joinpath('data/images').as_posix()
         self.title_text = sg.Text(text='ASP-T CMD Prompt', font=('Commodore 64 Angled', '12'), key='program_title')
 
         self.settings_button = sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
-                                         image_filename=os.path.join(self.image_folder, '\\settings_icon.png'),
+                                         image_filename=Path(image_folder).joinpath('settings_icon.png').as_posix(),
                                          pad=((660, 0), (0, 0)), key='main_window_settings_button')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=os.path.join(self.image_folder, '\\minimise_icon.png'),
+                                         image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
                                          key='main_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=os.path.join(self.image_folder, '\\maximise_icon.png'),
+                                         image_filename=Path(image_folder).joinpath('maximise_icon.png').as_posix(),
                                          key='main_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
-                                     image_filename=os.path.join(self.image_folder, '\\exit_icon.png'),
+                                     image_filename=Path(image_folder).joinpath('exit_icon.png').as_posix(),
                                      button_color='red', key='main_window_exit_button')
 
         self.console_window = sg.Output(expand_x=True, expand_y=True, echo_stdout_stderr=True,

@@ -6,20 +6,20 @@ from pathlib import Path
 class SettingsWindow:
 
     def __init__(self):
-        self.image_folder = Path('src/data/images').resolve().as_posix()
+        image_folder = Path('src').resolve().parent.joinpath('data/images').as_posix()
         self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
                                   key='settings_window_title')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=os.path.join(self.image_folder, '\\minimise_icon.png'),
+                                         image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
                                          key='main_window_minimise_button')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
-                                         image_filename=os.path.join(self.image_folder, '\\maximise_icon.png'),
+                                         image_filename=Path(image_folder).joinpath('maximise_icon.png').as_posix(),
                                          key='main_window_maximise_button')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
-                                     image_filename=os.path.join(self.image_folder, '\\exit_icon.png'),
+                                     image_filename=Path(image_folder).joinpath('exit_icon.png').as_posix(),
                                      button_color='red', key='main_window_exit_button')
 
         self.theme_text = sg.Text('Theme: ')
