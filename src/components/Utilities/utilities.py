@@ -138,7 +138,7 @@ def get_filename_from_path(file_path):
 def get_new_unit_test_paths():
     scripts = []
     rootdir = Path(__file__).resolve().parent.parent.parent
-    directories_to_exclude = ['Files', 'Images', 'test']
+    directories_to_exclude = ['Files', 'images', 'test']
     for dirpath, dirnames, filenames in os.walk(rootdir):
         for directory in directories_to_exclude:
             if '\\src\\' in dirpath and directory not in dirpath:
@@ -178,7 +178,7 @@ def image_to_base64(directory, icon_names):
 # - Decoding
 def base64_to_image(main_directory, image_file):
     updater = configupdater.ConfigUpdater()
-    iconsFile = "src/Images/Icons"
+    iconsFile = "src/images/Icons"
     filePath = Path.joinpath(main_directory, iconsFile)
     with open(filePath, 'r+') as file:
         updater.read_file(file)
@@ -193,7 +193,7 @@ def base64_to_image(main_directory, image_file):
 
 # Image Handling        
 def set_icon(main_directory, file_name):
-    file_name = "src/Images/Icon" + file_name
+    file_name = "src/images/Icon" + file_name
     icon = Path.joinpath(main_directory, file_name)
     return icon
 
