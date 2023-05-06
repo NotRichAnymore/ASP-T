@@ -21,7 +21,8 @@ class Console:
     def update_active_window(self, window_to_close, active_window, program_running):
         self.window_controller.update_active_window_(window_to_close, active_window, program_running)
 
-    def end_program(self, main_window):
+    @staticmethod
+    def end_program(main_window):
         main_window.close()
         del [main_window]
 
