@@ -1,7 +1,5 @@
-import os.path
-
 import PySimpleGUI as sg
-from src.Utilities.utilities import get_root_directory
+from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
 
 
