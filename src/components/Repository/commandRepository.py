@@ -1,13 +1,19 @@
 from src.components.Models.Commands.commands import Command
-
+from src.components.Utilities.sqliteUtilities import SqliteUtilities
 
 class CommandRepository:
 
     def __init__(self):
         self.command = Command(None)
+        self.initial_sql = SqliteUtilities()
+        self.database_path = None
 
     def create_command_object(self, command_name, command_arguments, command_options, command_type):
         return self.command.create_command_object(command_name, command_arguments, command_options, command_type)
+
+    def create_initial_tables(self):
+        table_list = self.command_table(), self.argument_table(), self.options_table()
+        self.initial_sql.create_initial_tables(self.database_path, table_list)
 
     def get_by_path(self, path):
         pass
@@ -27,7 +33,31 @@ class CommandRepository:
     def get_options_from_command_name(self, command_name):
         pass
 
+    def command_table(self):
+        pass
 
+    def argument_table(self):
+        pass
+
+    def options_table(self):
+        pass
+
+#  def valid_date_format(self, date_format):
+#         try:
+#             date.strftime(date.today(), date_format)
+#             return True
+#         except Exception as e:
+#             print(e)
+#             return False
+#
+#
+#     def valid_sleep_format(self, time_format):
+#         try:
+#             time.strftime(time.localtime(), time_format)
+#             return True
+#         except Exception as e:
+#             print(e)
+#             return False
 # self.command_list_path = Path('src').resolve().parent\
 #             .joinpath('data/files/command_list.json').as_posix()
 #
