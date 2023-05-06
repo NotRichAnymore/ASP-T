@@ -29,6 +29,10 @@ class Command:
     def get_command_type(self):
         return self.cmd_type
 
+    def create_command_object(self, command_name, command_arguments, command_options, command_type):
+        self.set_command_name(command_name)
+        self.set_command_arguments(command_arguments)
+        self.set_command_options(command_options)
+        self.set_command_type(command_type)
 
-
-    
+        return self
