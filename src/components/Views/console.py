@@ -1,18 +1,33 @@
-from src.Views import mainWindow, settingsWindow
-from src.Models.Windows import windowManager
-import PySimpleGUI as sg
-import pysnooper as ps
+from src.components.Views import settingsWindow, mainWindow
 
 
-class MainController:
 
-    def __init__(self):
-        self.window_manager = windowManager.WindowManager()
+class Console:
+
+    def __init__(self, command_controller, window_controller):
+        self.command_controller = command_controller
+        self.window_controller = window_controller
+        self.settings_window = settingsWindow.SettingsWindow()
+        self.main_window = mainWindow.MainWindow()
+
+
+    def execute_command(self, command_arguments):
+        command = self.command_controller.load_command(command_arguments)
+        return self.command_controller.run_command(command)
+
+    def get_active_window(self):
+        return self.window_controller.get_active_window()
+
+    def update_active_window(self, window_to_close, active_window, program_running):
+        self.window_controller.update_active_window_(window_to_close, active_window, program_running)
+
+    def end_program(self, main_window):
+        main_window.close()
+        del [main_window]
 
     def run_settings_window(self):
-        settings_window = settingsWindow.SettingsWindow().run_window()
-        window_manager = self.window_manager
-        active_window = window_manager.get_active_window()
+        settings_window = self.settings_window.run_window()
+        active_window = self.get_active_window()
         # Until the settings window isn't the active window
         while active_window == 'settings_window':
             event, values = settings_window.read()
@@ -24,17 +39,16 @@ class MainController:
                     # update the active window manager for the settings window to be closing
                     active_window = 'main_window'
                     if active_window != 'settings_window':
-                        window_manager.update_window_manager('settings_window', active_window, True)
+                        self.update_active_window('settings_window', active_window, True)
                         settings_window.close()
 
     def run(self):
         try:
-            window_manager = self.window_manager
             # Set main window as the currently running window and gui is currently running
-            active_window = window_manager.get_active_window()
-            window_manager.update_window_manager(None, 'main_window', True)
+            active_window = self.get_active_window()
+            self.update_active_window(None, 'main_window', True)
             # Run the main window
-            main_window = mainWindow.MainWindow().run_window()
+            main_window = self.main_window.run_window()
             while True:
                 event, values = main_window.read()
                 print(event, values)
@@ -42,17 +56,16 @@ class MainController:
                     # If Exit button is pressed on the main menu
                     case 'main_window_exit_button':
                         #  update the active window manager
-                        window_manager.update_window_manager('main_window', None, False)
+                        self.update_active_window('main_window', None, False)
                         # close and destroy the window
-                        main_window.close()
-                        del[main_window]
+                        self.end_program(main_window)
                         # exit the loop
                         break
 
                     # If the settings button is pressed on the main menu
                     case 'main_window_settings_button':
                         # update the active window manager for the settings window to be currently running
-                        window_manager.update_window_manager('main_window', 'settings_window', True)
+                        self.update_active_window('main_window', 'settings_window', True)
                         # hide the main menu
                         main_window.hide()
                         # run the settings window
@@ -63,6 +76,8 @@ class MainController:
                     case 'load_input_button':
                         command_arguments = values['command_arguments']
                         print(command_arguments)
+                        print(self.execute_command(command_arguments))
+
 
         except Exception as e:
             print(e)
