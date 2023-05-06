@@ -1,6 +1,7 @@
 from src.components.Models.Commands.commands import Command
 from src.components.Utilities.sqliteUtilities import SqliteUtilities
 
+
 class CommandRepository:
 
     def __init__(self):
@@ -33,14 +34,36 @@ class CommandRepository:
     def get_options_from_command_name(self, command_name):
         pass
 
-    def command_table(self):
-        pass
+    @staticmethod
+    def command_table():
+        command_table = """
+        CREATE TABLE IF NOT EXISTS Commands (
+        command_name TEXT PRIMARY KEY,
+        command_arguments TEXT,
+        command_options TEXT,
+        command_type TEXT)
+        """
+        return command_table
 
-    def argument_table(self):
-        pass
+    @staticmethod
+    def arguments_table():
+        arguments_table = """
+        CREATE TABLE IF NOT EXISTS Arguments (
+        command TEXT
+        command_arguments TEXT),
+        FOREIGN KEY (command) REFERENCES Commands(command_name)
+        """
+        return arguments_table
 
-    def options_table(self):
-        pass
+    @staticmethod
+    def options_table():
+        options_table = """
+        CREATE TABLE IF NOT EXISTS Options (
+        command TEXT
+        command_options TEXT),
+        FOREIGN KEY (command) REFERENCES Commands(command_name)
+        """
+        return options_table
 
 #  def valid_date_format(self, date_format):
 #         try:
