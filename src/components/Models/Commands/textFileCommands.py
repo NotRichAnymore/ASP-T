@@ -1,4 +1,4 @@
-from src.Models.Commands.commands import Command
+from src.components.Models.Commands.commands import Command
 
 
 class Cat(Command):

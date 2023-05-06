@@ -1,40 +1,40 @@
-from src.Models.Commands.commands import Command
+from src.components.Models.Commands.commands import Command
 
 
-class Date(Command):
+class Shutdown(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_date_command(self):
+    def initialise_shutdown_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_date_command(self):
+    def get_shutdown_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Sleep(Command):
+class Halt(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_sleep_command(self):
+    def initialise_halt_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_sleep_command(self):
+    def get_halt_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Uptime(Command):
+class Reboot(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_uptime_command(self):
+    def initialise_reboot_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_uptime_command(self):
+    def get_reboot_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()

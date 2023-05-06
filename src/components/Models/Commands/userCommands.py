@@ -1,80 +1,79 @@
-from src.Models.Commands.commands import Command
+from src.components.Models.Commands.commands import Command
 
 
-class Ls(Command):
+class Whoami(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_ls_command(self):
+    def initialise_whoami_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_ls_command(self):
+    def get_whoami_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Cp(Command):
+class Id(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_cp_command(self):
+    def initialise_id_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_cp_command(self):
+    def get_id_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Rm(Command):
+class Groups(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_rm_command(self):
+    def initialise_groups_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_rm_command(self):
+    def get_groups_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Mv(Command):
+class Passwd(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_mv_command(self):
+    def initialise_passwd_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_mv_command(self):
+    def get_passwd_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Chmod(Command):
+class Who(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_chmod_command(self):
+    def initialise_who_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_chmod_command(self):
+    def get_who_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Chown(Command):
+class Last(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_chown_command(self):
+    def initialise_passwd_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_chown_command(self):
+    def get_passwd_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
-
