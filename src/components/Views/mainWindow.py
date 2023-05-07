@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
-from src.data.files.custom_themes import matrix_theme
+from src.data.files.custom_themes import custom_themes
 
 
 class MainWindow:
@@ -39,7 +39,7 @@ class MainWindow:
 
         self.load_input_button = sg.Button(visible=False, bind_return_key=True, key='load_input_button')
 
-        self.themes = {'Matrix': matrix_theme}
+        self.themes = custom_themes
 
     def initialise_themes(self):
         for name, theme in zip(self.themes.keys(), self.themes.values()):

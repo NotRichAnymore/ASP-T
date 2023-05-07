@@ -35,8 +35,8 @@ class SettingsWindow:
     def preview_themes_layout(theme=None):
 
         layout = [
-            [sg.Text(f'Current Theme: {sg.theme()}')],
-            [sg.Text('Here are a list of possible themes')],
+            [sg.Text(f'Current Theme: {sg.theme()}', background_color=sg.theme_background_color())],
+            [sg.Text('Here are a list of possible themes', background_color=sg.theme_background_color())],
             [sg.Combo(sg.theme_list(), expand_x=True, default_value=sg.theme(theme), enable_events=True,
                       key='theme_list')],
             [sg.Button(button_text='Set current theme', expand_x=True, key='set_theme_button')],
@@ -50,7 +50,6 @@ class SettingsWindow:
         print('viewing themes')
         while True:
             event, values = window.read()
-            print(event, values)
             if event in 'theme_list':
                 window.close()
                 window = self.preview_themes_layout(values['theme_list'])
