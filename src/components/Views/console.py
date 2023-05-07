@@ -13,6 +13,7 @@ class Console:
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
+        print(command)
         return self.command_controller.run_command(command)
 
     def get_active_window(self):
