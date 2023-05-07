@@ -1,3 +1,6 @@
+from src.components.Utilities.utilities import create_error_message
+
+
 class CommandService:
     def __init__(self, repo, validator):
         self.repository = repo
@@ -21,8 +24,9 @@ class CommandService:
     def parse_command(self, user_defined_command):
         command_name = self.repository.get_command_name
         command_type = self.repository.get_command_type(user_defined_command)
-
+        print('Validating command')
         if self.validator.validate_command(command_name, user_defined_command):
+            print('Command valid')
             return user_defined_command, command_type
 
     def parse_command_arguments(self, user_defined_arguments):
@@ -60,9 +64,14 @@ class CommandService:
         command_arguments = self.parse_command_arguments(user_defined_arguments)
         command_options = self.parse_command_options(user_defined_options)
 
-        if self.validator.parse_successful():
+        status, valid_parses, invalid_parses = self.validator.parse_successful()
+        if status and invalid_parses is None:
             self.validator.reset()
             return self.repository.create_command_object(command_name, command_arguments, command_options, command_type)
+        else:
+            return create_error_message(error_type='parse',
+                                        message='Unable to parse user input',
+                                        error_message=None)
 
     def run_command(self, command):
         pass
