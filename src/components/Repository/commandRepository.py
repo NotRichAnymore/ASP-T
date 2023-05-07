@@ -69,7 +69,7 @@ class CommandRepository:
     @staticmethod
     def help_command_table():
         help_table = """
-        CREATE TABLE IF NOT EXISTS Commands (
+        CREATE TABLE IF NOT EXISTS Help (
         id INTEGER AUTOINCREMENT,
         command_info TEXT,
         arguments_info TEXT,
