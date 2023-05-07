@@ -9,6 +9,7 @@ class Console:
         self.window_controller = window_controller
         self.settings_window = settingsWindow.SettingsWindow()
         self.main_window = mainWindow.MainWindow()
+        self.theme = None
 
 
     def execute_command(self, command_arguments):
@@ -43,6 +44,9 @@ class Console:
                     if active_window != 'settings_window':
                         self.update_active_window('settings_window', active_window, True)
                         settings_window.close()
+
+                case 'program_theme_button':
+                    self.theme = self.settings_window.run_preview_themes_window()
 
     def run(self):
         try:

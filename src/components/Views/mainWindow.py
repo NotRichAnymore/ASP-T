@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
+from src.data.files.custom_themes import matrix_theme
 
 
 class MainWindow:
@@ -38,6 +39,12 @@ class MainWindow:
 
         self.load_input_button = sg.Button(visible=False, bind_return_key=True, key='load_input_button')
 
+        self.themes = {'Matrix': matrix_theme}
+
+    def initialise_themes(self):
+        for name, theme in zip(self.themes.keys(), self.themes.values()):
+            sg.theme_add_new(name, theme)
+
     @staticmethod
     def get_title():
         return 'ASP-T CMD Prompt'
@@ -67,4 +74,5 @@ class MainWindow:
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
     def run_window(self):
+        self.initialise_themes()
         return self.create_window()

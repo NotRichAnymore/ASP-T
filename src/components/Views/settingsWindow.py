@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-import os.path
 from pathlib import Path
 
 
@@ -33,6 +32,36 @@ class SettingsWindow:
         self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button')
 
     @staticmethod
+    def preview_themes_layout(theme=None):
+
+        layout = [
+            [sg.Text(f'Current Theme: {sg.theme()}')],
+            [sg.Text('Here are a list of possible themes')],
+            [sg.Combo(sg.theme_list(), expand_x=True, default_value=sg.theme(theme), enable_events=True,
+                      key='theme_list')],
+            [sg.Button(button_text='Set current theme', expand_x=True, key='set_theme_button')],
+            [sg.Button('Close', expand_x=True, key='close_preview_theme_window')]
+        ]
+        window = sg.Window('Preview Themes', layout, modal=True, keep_on_top=True, no_titlebar=True, grab_anywhere=True)
+        return window
+
+    def run_preview_themes_window(self):
+        window = self.preview_themes_layout()
+        print('viewing themes')
+        while True:
+            event, values = window.read()
+            print(event, values)
+            if event in 'theme_list':
+                window.close()
+                window = self.preview_themes_layout(values['theme_list'])
+            if event in 'set_theme_button':
+                window.close()
+                return sg.theme(values['theme_list'])
+            if event in 'close_preview_theme_window':
+                window.close()
+                return sg.theme()
+
+    @staticmethod
     def get_title():
         return 'ASP-T CMD Prompt (Settings)'
 
@@ -42,8 +71,8 @@ class SettingsWindow:
 
     def set_system_tab(self):
         tab_layout = [
-             [self.theme_text, self.chosen_theme_text],
-             [self.theme_button]
+            [self.theme_text, self.chosen_theme_text],
+            [self.theme_button]
         ]
         layout = sg.Tab('System', tab_layout, key='system_tab')
         return layout
