@@ -1,5 +1,5 @@
 import sqlite3 as sql
-from utilities import create_error_message
+from src.components.Utilities.utilities import create_error_message
 from sqlite3 import Error
 from pathlib import Path
 
