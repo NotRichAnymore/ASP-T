@@ -99,9 +99,10 @@ class SettingsWindow:
         ]
         return layout
 
-    def create_window(self):
+    def create_window(self, theme=None):
+        sg.theme(theme)
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(535, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def run_window(self):
-        return self.create_window()
+    def run_window(self, theme=None):
+        return self.create_window(theme)
