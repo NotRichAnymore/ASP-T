@@ -1,3 +1,6 @@
+import PySimpleGUI as sg
+
+
 class Settings:
     def __init__(self):
         self.config_path = None
@@ -28,3 +31,6 @@ class Settings:
 
     def get_user_details(self):
         return self.user_details
+
+    def create_settings_object(self):
+        return sg.UserSettings(filename=self.config_path, use_config_file=True, convert_bools_and_none=True)
