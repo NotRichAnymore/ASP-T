@@ -4,13 +4,21 @@ from src.components.Views import settingsWindow, mainWindow
 
 class Console:
 
-    def __init__(self, command_controller, window_controller):
+    def __init__(self, command_controller, window_controller, settings_controller):
         self.command_controller = command_controller
         self.window_controller = window_controller
+        self.settings_controller = settings_controller
         self.settings_window = settingsWindow.SettingsWindow()
         self.main_window = mainWindow.MainWindow()
         self.theme = None
+        self.settings = None
 
+    def load_settings(self, path=None):
+        self.settings = self.settings_controller.load_settings(path)
+
+    def establish_current_theme(self):
+        self.theme = 'SystemDefault' if self.settings['System']['Theme'] is None else \
+            self.settings['System']['Theme']
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -33,6 +41,7 @@ class Console:
         active_window = self.get_active_window()
         # Until the settings window isn't the active window
         while active_window == 'settings_window':
+            self.establish_current_theme()
             event, values = settings_window.read()
             print(event, values)
 
@@ -47,15 +56,20 @@ class Console:
 
                 case 'program_theme_button':
                     self.theme = self.settings_window.run_preview_themes_window()
+                    self.settings_controller.update_theme(self.theme)
+                    settings_window.close()
+                    self.settings_window.run_window(self.theme)
 
     def run(self):
         try:
+            self.load_settings()
             # Set main window as the currently running window and gui is currently running
             active_window = self.get_active_window()
             self.update_active_window(None, 'main_window', True)
             # Run the main window
             main_window = self.main_window.run_window()
             while True:
+                self.establish_current_theme()
                 event, values = main_window.read()
                 print(event, values)
                 match event:
