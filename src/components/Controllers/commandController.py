@@ -1,11 +1,10 @@
-from src.components.Models.Commands import commands
+
 
 
 class CommandController:
 
     def __init__(self, service):
         self.service = service
-        self.command = commands.Command(None)
 
     def load_command(self, command_arguments):
         return self.service.parse(command_arguments)
