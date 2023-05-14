@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pysnooper
+
 
 class SettingsService:
     def __init__(self, repo, validator):
@@ -7,13 +9,15 @@ class SettingsService:
         self.validator = validator
         self.object_loaded = None
 
-    def create_new_settings_obj(self):
-        settings = self.repository.initialise_config_file()
+    def create_new_settings_obj(self, default_path):
+        settings = self.repository.initialise_config_file(default_path)
+        self.repository.set_initial_vars()
         self.object_loaded = True
         return settings
 
     def existing_settings_obj(self, path):
         settings = self.repository.get_settings_by_path(path)
+        self.repository.set_initial_vars()
         self.object_loaded = True
         return settings
 
@@ -31,19 +35,18 @@ class SettingsService:
     def get_previous_theme(self):
         return self.repository.get_last_theme()
 
+    @pysnooper.snoop()
     def establish_theme(self, new_theme=None):
-        current_theme, previous_theme = self.repository.get_themes()
-        match current_theme:
-            #   program startup previous theme should be none and current theme should be systemdefault
-            case current_theme if current_theme is None and previous_theme is None and new_theme is None:
-                self.repository.change_theme_order(default=True)
-            #   Initial entry to change settings: previous should be none,
-            #   should be new_theme and current_theme should be system default
-            case current_theme if current_theme == 'SystemDefault' and previous_theme is None and new_theme:
-                self.repository.change_theme_order(previous=current_theme, current=new_theme)
-            #   any subsequent changes to current theme, swap current theme and previous, current theme now is new_theme
-            case current_theme if current_theme and previous_theme and new_theme:
-                self.repository.change_theme_order(previous=current_theme, current=new_theme)
-            #   if new_theme is none then change to be the last theme
-            case current_theme if new_theme is None:
-                return current_theme
+        previous_theme, current_theme = self.repository.get_themes()
+        if previous_theme is None and current_theme is None and \
+                new_theme == 'SystemDefault' or new_theme == 'Default' or new_theme is None:
+            self.repository.change_theme_order(default=True)
+
+        if previous_theme is None and current_theme == 'SystemDefault':
+            self.repository.change_theme_order(previous=current_theme, current=new_theme)
+
+        if current_theme and previous_theme and new_theme:
+            self.repository.change_theme_order(previous=current_theme, current=new_theme)
+
+        updated_previous_theme, updated_current_theme = self.repository.get_themes()
+        return updated_current_theme

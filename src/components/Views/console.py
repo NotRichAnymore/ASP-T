@@ -28,8 +28,9 @@ class Console:
         for name, theme in zip(self.custom_themes.keys(), self.custom_themes.values()):
             sg.theme_add_new(name, theme)
 
-    def load_settings(self, path=None):
-        self.settings = self.settings_controller.load_settings(path)
+    @pysnooper.snoop()
+    def load_settings(self, default_path=False, path=None):
+        self.settings = self.settings_controller.load_settings(default_path, path)
 
     def establish_current_theme(self, theme=None):
         # If a theme has been chosen update current and previous theme
@@ -92,15 +93,18 @@ class Console:
 
     @pysnooper.snoop()
     def run(self):
-        self.load_settings()
+        self.load_settings(default_path=True)
         self.initialise_themes()
-
+        settings = self.settings
+        current_theme_from_file = settings['System']['current_theme']
+        self.establish_current_theme(current_theme_from_file)
         reload_contents = False
         reload_window = False
         # Set main window as the currently running window and gui is currently running
         self.update_active_window(None, 'main_window', True)
         # Run the main window
         main_window = mainWindow.MainWindow()
+        sg.theme(self.establish_current_theme())
         window = main_window.run_window()
         main_loop = True
         while main_loop:

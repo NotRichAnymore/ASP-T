@@ -28,7 +28,8 @@ class WindowController:
     @pysnooper.snoop()
     def save_console_output(self, settings, output):
         save_folder = settings['Files']['save_folder']
-        self.save_path = save_path = Path(save_folder).joinpath('console_output.txt')
+        save_path = Path(save_folder).joinpath('console_output.txt')
+        self.save_path = save_path
         with open(save_path, 'w+') as output_file:
             output_file.writelines(output)
 
