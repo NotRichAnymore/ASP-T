@@ -92,9 +92,13 @@ class SettingsRepository:
             themes = previous, current
         self.write_to_config()
 
-
         self.set_themes(themes)
 
+    def change_save_folder(self, save_folder):
+        self.read_config()
+        self.updater['Files']['save_folder'] = save_folder
+        self.write_to_config()
+        self.set_save_folder(save_folder)
 
     @pysnooper.snoop()
     def create_existing_settings(self):

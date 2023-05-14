@@ -47,7 +47,6 @@ class Console:
         if save_folder:
             self.settings_controller.manage_save_folder(save_folder)
             self.save_folder = save_folder
-        return self.save_folder
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)

@@ -1,6 +1,6 @@
 
 
-matrix_theme = {'BACKGROUND': '#006400',
+matrix_theme = {'BACKGROUND': '#006400',  # dark green #006400
                 'TEXT': '#FFF4C9',
                 'INPUT': '#030303',
                 'TEXT_INPUT': '#B3EE3A',

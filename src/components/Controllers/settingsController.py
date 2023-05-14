@@ -19,3 +19,6 @@ class SettingsController:
     def manage_theme(self, theme):
         return self.service.establish_theme(theme)
 
+    def manage_save_folder(self, save_folder):
+        self.service.establish_save_foler(save_folder)
+

@@ -77,14 +77,15 @@ class SettingsWindow:
                 break
     @pysnooper.snoop()
     def run_select_folder_window(self):
+        background_color = sg.theme_input_background_color()
         layout = [
-            [sg.Text('Select a folder for saving!')],
+            [sg.Text('Select a folder for saving!', background_color=background_color)],
             [sg.FolderBrowse('Select folder', size=(18, 1), auto_size_button=True)],
             [sg.Button('Exit', expand_x=True)]
         ]
 
-        window = sg.Window('folder_browser', layout=layout, no_titlebar=True,
-                           grab_anywhere=True, keep_on_top=True, modal=True)
+        window = sg.Window('folder_browser', layout=layout, background_color=background_color,
+                           no_titlebar=True, grab_anywhere=True, keep_on_top=True, modal=True)
 
         while True:
             event, values = window.read()
