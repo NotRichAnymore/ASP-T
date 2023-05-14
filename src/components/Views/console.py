@@ -11,6 +11,7 @@ import traceback
 class Console:
 
     def __init__(self, command_controller, window_controller, settings_controller):
+        self.save_folder = None
         self.command_controller = command_controller
         self.window_controller = window_controller
         self.settings_controller = settings_controller
@@ -40,8 +41,13 @@ class Console:
             new_theme = self.settings_controller.manage_theme(theme)
             self.theme = new_theme
         # otherwise return the current theme
-        else:
-            return self.theme
+        return self.theme
+
+    def establish_save_folder(self, save_folder=None):
+        if save_folder:
+            self.settings_controller.manage_save_folder(save_folder)
+            self.save_folder = save_folder
+        return self.save_folder
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -61,6 +67,7 @@ class Console:
 
     @pysnooper.snoop()
     def run_settings_window(self):
+        settings = self.settings
         settings_window_ = settingsWindow.SettingsWindow()
         window = settings_window_.create_new_window(window_num=str(self.settings_window_num))
         # Until the settings window isn't the active window
@@ -87,6 +94,15 @@ class Console:
                     window.close()
                     window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
                                                                 new_theme=self.establish_current_theme())
+
+                elif event == f'load_save_folder_button{self.suffix}':
+                    self.establish_save_folder(values[f'save_folder_input{self.suffix}'])
+
+                elif event == f'select_folder_button{self.suffix}':
+                    save_folder = settings_window_.run_select_folder_window()
+                    self.establish_save_folder(save_folder)
+                    window[f'save_folder_input{self.suffix}'].update(settings['Files']['save_folder'])
+
         except Exception as e:
             window.close()
             del[window]

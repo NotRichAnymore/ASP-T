@@ -75,6 +75,30 @@ class SettingsWindow:
             if event in f'close_preview_theme_window{self.preview_themes_suffix}':
                 window.close()
                 break
+    @pysnooper.snoop()
+    def run_select_folder_window(self):
+        layout = [
+            [sg.Text('Select a folder for saving!')],
+            [sg.FolderBrowse('Select folder', size=(18, 1), auto_size_button=True)],
+            [sg.Button('Exit', expand_x=True)]
+        ]
+
+        window = sg.Window('folder_browser', layout=layout, no_titlebar=True,
+                           grab_anywhere=True, keep_on_top=True, modal=True)
+
+        while True:
+            event, values = window.read()
+            x = window.size
+            print(x)
+            if event in 'Select Folder':
+                return values['Select Folder']
+            elif event in 'Exit':
+                return None
+
+
+
+
+
 
     @staticmethod
     def get_title():
@@ -134,7 +158,8 @@ class SettingsWindow:
                       key=f'settings_window_maximise_button{suffix}'), \
             sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                       image_filename=Path(self.image_folder).joinpath('exit_icon.png').as_posix(),
-                      button_color='red', key=f'settings_window_exit_button{suffix}')
+                      button_color='red', key=f'settings_window_exit_button{suffix}'), \
+            sg.Button(visible=False, bind_return_key=True, key=f'load_save_folder_button{suffix}')
 
         new_files_tab_layout = [
             [sg.Text(f'Theme: {sg.theme()}', key=f'current_theme_text{suffix}')],
@@ -145,8 +170,8 @@ class SettingsWindow:
         new_files_tab = sg.Tab('Files', new_files_tab_layout, key=f'files_tab{suffix}')
 
         new_system_tab_layout = [
-            [sg.Text('Save Folder: ')],
-            [sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
+            [sg.Text('Save Folder: '),
+             sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
             [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')],
             [sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
         ]
