@@ -61,12 +61,13 @@ class Console:
     @pysnooper.snoop()
     def run_settings_window(self):
         settings_window_ = settingsWindow.SettingsWindow()
-        window = settings_window_.run_window()
+        window = settings_window_.create_new_window(window_num=str(self.settings_window_num))
         # Until the settings window isn't the active window
         active_window = self.get_active_window()
         try:
             while active_window == 'settings_window':
                 event, values = window.read()
+                print(event, values)
                 sg.theme(self.establish_current_theme())
                 self.suffix = "_" + str(self.settings_window_num)
                 # if the exit button is pressed on the settings menu
@@ -82,7 +83,8 @@ class Console:
                                                                                self.establish_current_theme())
                     self.establish_current_theme(updated_theme)
                     self.settings_window_num += 1
-                    window = settings_window_.create_new_window(window_num=str(self.main_window_num),
+                    window.close()
+                    window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
                                                                 new_theme=self.establish_current_theme())
         except Exception as e:
             window.close()
@@ -141,7 +143,6 @@ class Console:
                         # regardless of the output, reload console
                         if self.get_active_window() == 'settings_window':
                             self.window_controller.save_console_output(self.settings, values[f'output_screen{self.suffix}'])
-                            self.main_window_keys = window.AllKeysDict
                             window.close()
                             self.run_settings_window()
                             reload_contents = True

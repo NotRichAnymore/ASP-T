@@ -8,6 +8,7 @@ class SettingsWindow:
 
     def __init__(self):
 
+        self.preview_themes_suffix = None
         image_folder = Path('src').resolve().parent.parent.joinpath('data/images').as_posix()
         self.image_folder = image_folder
         self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
@@ -33,10 +34,8 @@ class SettingsWindow:
         self.save_folder_button = sg.Button('Select Folder', expand_x=True, key='select_folder_button_0')
         self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button_0')
 
-    @pysnooper.snoop()
-    def run_preview_themes_window(self, window_num, new_theme=None):
+    def get_preview_themes_window_layout(self, suffix, new_theme=None):
         sg.theme(new_theme)
-        suffix = '_' + str(window_num)
         layout = [
             [sg.Text(f'Current Theme: {sg.theme() if new_theme is None else new_theme}',
                      background_color=sg.theme_background_color())],
@@ -46,17 +45,34 @@ class SettingsWindow:
             [sg.Button(button_text='Set current theme', expand_x=True, key=f'set_theme_button{suffix}')],
             [sg.Button('Close', expand_x=True, key=f'close_preview_theme_window{suffix}')]
         ]
-        window = sg.Window('Preview Themes', layout, modal=True, keep_on_top=True, no_titlebar=True, grab_anywhere=True)
+        return layout
+
+    @pysnooper.snoop()
+    def run_preview_themes_window(self, window_num, new_theme=None):
+        sg.theme(new_theme)
+        suffix = '_' + str(window_num)
+        self.preview_themes_suffix = suffix
+        layout = self.get_preview_themes_window_layout(suffix, new_theme)
+        window = sg.Window(f'Preview Themes{suffix}', layout, modal=True, keep_on_top=True, no_titlebar=True,
+                           grab_anywhere=True)
         while True:
             event, values = window.read()
             if event in f'theme_list{suffix}':
                 window.close()
                 window_num += 1
-                window = self.run_preview_themes_window(window_num, values[f'theme_list{suffix}'])
-            if event in f'set_theme_button{suffix}':
+                new_suffix = '_' + str(window_num)
+                self.preview_themes_suffix = new_suffix
+                window = sg.Window(f'Preview Themes{new_suffix}',
+                                   self.get_preview_themes_window_layout(self.preview_themes_suffix,
+                                                                         values[f'theme_list{suffix}']),
+                                   modal=True,
+                                   keep_on_top=True,
+                                   no_titlebar=True,
+                                   grab_anywhere=True)
+            if event in f'set_theme_button{self.preview_themes_suffix}':
                 window.close()
-                return values[f'theme_list{suffix}']
-            if event in f'close_preview_theme_window{suffix}':
+                return values[f'theme_list{self.preview_themes_suffix}']
+            if event in f'close_preview_theme_window{self.preview_themes_suffix}':
                 window.close()
                 break
 
@@ -136,7 +152,7 @@ class SettingsWindow:
         ]
         new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
         new_tab_layout = [[new_files_tab], [new_system_tab]]
-        new_tab_group = sg.TabGroup(new_tab_layout)
+        new_tab_group = sg.TabGroup(new_tab_layout, expand_x=True)
 
         new_layout = [
             [new_title_layout],

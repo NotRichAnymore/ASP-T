@@ -14,7 +14,7 @@ matrix_theme = {'BACKGROUND': '#006400',
 cyberpunk_theme = {'BACKGROUND': '#9400D3',  # darkviolet #9400D3
                    'TEXT': '#EEE5DE',  # seashell2 #EEE5DE
                    'INPUT': '#FF1493',  # deeppink1	#FF1493
-                   'TEXT_INPUT': '#68228B',  # darkorchid4	#68228B
+                   'TEXT_INPUT': '#00FA9A',  # darkorchid4	#68228B mediumspringgreen	#00FA9A
                    'SCROLL': '##1874CD',  # dodgerblue3 #1874CD
                    'BUTTON': ('#EEE5DE', '#00CED1'),  # seashell2 #EEE5DE # darkturquoise #00CED1
                    'PROGRESS': ('#00CED1', '#EEE5DE'),  # darkturquoise #00CED1 # seashell2 #EEE5DE
