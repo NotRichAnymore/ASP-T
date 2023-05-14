@@ -1,6 +1,11 @@
+from pathlib import Path
+import pysnooper
+
+
 class WindowController:
     def __init__(self):
         self.active_window_manager = {'previous_window': '', 'active_window': '', 'gui_status': None}
+        self.save_path = None
 
     def get_active_window_manager(self):
         return self.active_window_manager
@@ -17,3 +22,17 @@ class WindowController:
 
     def get_active_window_status(self):
         return self.active_window_manager['gui_status']
+
+
+
+    @pysnooper.snoop()
+    def save_console_output(self, settings, output):
+        save_folder = settings['Files']['save_folder']
+        self.save_path = save_path = Path(save_folder).joinpath('console_output.txt')
+        with open(save_path, 'w+') as output_file:
+            output_file.writelines(output)
+
+    @pysnooper.snoop()
+    def load_console_output(self):
+        with open(self.save_path, 'r') as output_file:
+            return output_file.readlines()

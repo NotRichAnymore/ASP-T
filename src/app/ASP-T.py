@@ -13,42 +13,24 @@ from src.components.Services.settingsService import SettingsService
 from src.components.Controllers.settingsController import SettingsController
 
 
-def build_command_components():
-    repo = CommandRepository()
-    validator = CommandValidator()
-    service = CommandService(repo, validator)
-    controller = CommandController(service)
-    return controller
+def run_program():
+    settings_repo = SettingsRepository()
+    settings_validator = SettingsValidator()
+    settings_service = SettingsService(settings_repo, settings_validator)
+    settings_controller = SettingsController(settings_service)
 
+    command_repo = CommandRepository()
+    command_validator = CommandValidator()
+    command_service = CommandService(command_repo, command_validator)
+    command_controller = CommandController(command_service)
 
-def build_settings_components():
-    repo = SettingsRepository()
-    validator = SettingsValidator()
-    service = SettingsService(repo, validator)
-    controller = SettingsController(service)
-    return controller
-
-
-def build_window_components():
-    controller = WindowController()
-    return controller
-
-
-def build_program():
-    settings_controller = build_settings_components()
-    command_controller = build_command_components()
-    window_controller = build_window_components()
+    window_controller = WindowController()
     console = Console(command_controller, window_controller, settings_controller)
-    return console
-
-
-def run_program(aspt):
-    aspt.run()
+    console.run()
 
 
 def main():
-    aspt = build_program()
-    run_program(aspt)
+    run_program()
 
 
 if __name__ == '__main__':

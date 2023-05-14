@@ -1,49 +1,48 @@
 import PySimpleGUI as sg
 from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
-from src.data.files.custom_themes import custom_themes
 
 
 class MainWindow:
 
     def __init__(self):
-        image_folder = Path('src').resolve().parent.joinpath('data/images').as_posix()
-        self.title_text = sg.Text(text='ASP-T CMD Prompt', font=('Commodore 64 Angled', '12'), key='program_title')
+        image_folder = Path('src').resolve().parent.parent.joinpath('data/images').as_posix()
+        self.image_folder = image_folder
+        self.title_text = sg.Text(text='ASP-T CMD Prompt', font=('Commodore 64 Angled', '12'), key='program_title_0')
 
         self.settings_button = sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('settings_icon.png').as_posix(),
-                                         pad=((660, 0), (0, 0)), key='main_window_settings_button')
+                                         pad=((660, 0), (0, 0)), key='main_window_settings_button_0')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
-                                         key='main_window_minimise_button')
+                                         key='main_window_minimise_button_0')
 
         self.maximise_button = sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('maximise_icon.png').as_posix(),
-                                         key='main_window_maximise_button')
+                                         key='main_window_maximise_button_0')
 
         self.exit_button = sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                                      image_filename=Path(image_folder).joinpath('exit_icon.png').as_posix(),
-                                     button_color='red', key='main_window_exit_button')
+                                     button_color='red', key='main_window_exit_button_0')
 
-        self.console_window = sg.Output(expand_x=True, expand_y=True, echo_stdout_stderr=True,
-                                        font=('Commodore 64 Angled', '12'), key='output_screen')
+        self.console_window = sg.Multiline(expand_x=True, expand_y=True, autoscroll=True, write_only=False,
+                                           #reroute_stderr=True,
+                                           reroute_stdout=True,
+                                           font=('Commodore 64 Angled', '12'), key='output_screen_0')
+
 
         self.command_prompt = sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
-                                      font=('Commodore 64 Angled', '10'), key='command_prompt')
+                                      font=('Commodore 64 Angled', '10'), key='command_prompt_0')
 
         self.command_arguments = sg.Input(expand_x=True, font=('Commodore 64 Angled', '10'),
                                           background_color=sg.theme_background_color(),
                                           text_color=sg.theme_input_text_color(), do_not_clear=False,
-                                          key='command_arguments')
+                                          key='command_arguments_0')
 
-        self.load_input_button = sg.Button(visible=False, bind_return_key=True, key='load_input_button')
+        self.load_input_button = sg.Button(visible=False, bind_return_key=True, key='load_input_button_0')
 
-        self.themes = custom_themes
 
-    def initialise_themes(self):
-        for name, theme in zip(self.themes.keys(), self.themes.values()):
-            sg.theme_add_new(name, theme)
 
     @staticmethod
     def get_title():
@@ -69,11 +68,50 @@ class MainWindow:
         ]
         return layout
 
-    def create_window(self, theme=None):
-        sg.theme(theme)
+    def create_window(self):
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(1000, 700), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def run_window(self, theme=None):
-        self.initialise_themes()
-        return self.create_window(theme)
+    def create_new_window(self, window_num, new_theme=None):
+        sg.theme(new_theme)
+        suffix = '_' + window_num
+        new_title = (self.get_title() + suffix)
+        new_layout = [
+            [sg.Text(text='ASP-T CMD Prompt', font=('Commodore 64 Angled', '12'), key=f'program_title{suffix}'),
+             sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
+                       image_filename=Path(self.image_folder).joinpath('settings_icon.png').as_posix(),
+                       pad=((660, 0), (0, 0)), key=f'main_window_settings_button{suffix}'),
+             sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
+                       image_filename=Path(self.image_folder).joinpath('minimise_icon.png').as_posix(),
+                       key=f'main_window_minimise_button{suffix}'),
+             sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),
+                       image_filename=Path(self.image_folder).joinpath('maximise_icon.png').as_posix(),
+                       key=f'main_window_maximise_button{suffix}'),
+             sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
+                       image_filename=Path(self.image_folder).joinpath('exit_icon.png').as_posix(),
+                       button_color='red', key=f'main_window_exit_button{suffix}'),
+             sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
+                       image_filename=Path(self.image_folder).joinpath('exit_icon.png').as_posix(),
+                       button_color='red', key=f'main_window_exit_button{suffix}')
+             ],
+
+            [sg.Multiline(expand_x=True, expand_y=True, autoscroll=True, write_only=False,
+                                           #reroute_stderr=True,
+                                           reroute_stdout=True,
+                                           font=('Commodore 64 Angled', '12'), key=f'output_screen{suffix}')],
+
+            [sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
+                     font=('Commodore 64 Angled', '10'), key=f'command_prompt{suffix}'),
+             sg.Input(expand_x=True, font=('Commodore 64 Angled', '10'),
+                      background_color=sg.theme_background_color(),
+                      text_color=sg.theme_input_text_color(), do_not_clear=False,
+                      key=f'command_arguments{suffix}'),
+             sg.Button(visible=False, bind_return_key=True, key=f'load_input_button{suffix}')
+             ]
+
+        ]
+        return sg.Window(title=new_title, layout=new_layout, size=(1000, 700), no_titlebar=True,
+                         grab_anywhere=True, keep_on_top=True, modal=True, finalize=True)
+
+    def run_window(self):
+        return self.create_window()

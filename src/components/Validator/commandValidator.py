@@ -29,9 +29,9 @@ class CommandValidator:
                     self.valid_command = False
                     raise IOError
         except IOError as ioe:
-            print(create_error_message(error_type='validate', 
-                                       message=f'Unable to validate command: {user_defined_command}',
-                                       error_message=str(ioe)))
+            return create_error_message(error_type='validate',
+                                        message=f'Unable to validate command: {user_defined_command}',
+                                        error_message=str(ioe))
 
     def validate_command_arguments(self, user_defined_arguments, arguments_from_repo):
         parse_type = 'arguments'
@@ -54,10 +54,10 @@ class CommandValidator:
             else:
                 raise IOError
         except IOError as ioe:
-            print(create_error_message(error_type='validate', 
-                                       message=f'Unable to validate arguments: '
-                                               f'{",".join(arg for arg in user_defined_arguments)}',
-                                       error_message=str(ioe)))
+            return create_error_message(error_type='validate',
+                                        message=f'Unable to validate arguments: '
+                                                f'{",".join(arg for arg in user_defined_arguments)}',
+                                        error_message=str(ioe))
 
     def validate_command_options(self, user_defined_options, options_from_repo):
         try:
@@ -89,10 +89,10 @@ class CommandValidator:
                     self.valid_options = True
 
         except IOError as e:
-            print(create_error_message(error_type='validate', 
-                                       message=f'Unable to validate options: '
-                                               f'{",".join(opt for opt in user_defined_options)}',
-                                       error_message=str(e)))
+            return create_error_message(error_type='validate',
+                                        message=f'Unable to validate options: '
+                                                f'{",".join(opt for opt in user_defined_options)}',
+                                        error_message=str(e))
 
     def parse_successful(self):
         if self.valid_command and self.valid_arguments and self.valid_options:

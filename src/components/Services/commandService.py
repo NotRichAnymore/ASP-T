@@ -24,9 +24,9 @@ class CommandService:
     def parse_command(self, user_defined_command):
         command_name = self.repository.get_command_name
         command_type = self.repository.get_command_type(user_defined_command)
-        print('Validating command')
+        # print('Validating command')
         if self.validator.validate_command(command_name, user_defined_command):
-            print('Command valid')
+            # print('Command valid')
             return user_defined_command, command_type
 
     def parse_command_arguments(self, user_defined_arguments):
