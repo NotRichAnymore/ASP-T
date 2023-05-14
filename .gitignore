@@ -155,4 +155,4 @@ cython_debug/
 
 #.idea/
 
-src/data/files/config.ini
+src/data/files/
