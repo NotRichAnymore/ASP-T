@@ -110,6 +110,10 @@ class Console:
                     reload_window = False
                     
                 self.suffix = "_" + str(self.main_window_num)
+
+                if not main_loop:
+                    break
+
                 run_event_loop = True
                 while run_event_loop:
                     if self.main_window_num > 0 and reload_contents:
@@ -127,6 +131,7 @@ class Console:
                         self.end_program(window)
                         # exit the loop
                         run_event_loop = False
+                        main_loop = False
 
                     # If the settings button is pressed on the main menu
                     elif event == f'main_window_settings_button{self.suffix}':
