@@ -1,4 +1,4 @@
-from src.components.Models.Commands.commands import Command
+from src.components.command.Models.Commands.commands import Command
 
 
 class Whoami(Command):

@@ -3,7 +3,7 @@ import configparser
 import PySimpleGUI as sg
 from pathlib import Path
 from src.components.Utilities.utilities import create_error_message
-from src.components.Models.Settings import Settings
+from src.components.settings.Models.Settings import Settings
 import pysnooper
 
 

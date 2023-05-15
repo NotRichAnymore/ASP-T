@@ -1,66 +1,80 @@
-from src.components.Models.Commands.commands import Command
+from src.components.command.Models.Commands.commands import Command
 
 
-class Cd(Command):
+class Ls(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_cd_command(self):
+    def initialise_ls_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_cd_command(self):
+    def get_ls_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Pwd(Command):
+class Cp(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_pwd_command(self):
+    def initialise_cp_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_pwd_command(self):
+    def get_cp_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Ln(Command):
+class Rm(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_ln_command(self):
+    def initialise_rm_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_ln_command(self):
+    def get_rm_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Mkdir(Command):
+class Mv(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_mkdir_command(self):
+    def initialise_mv_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_mkdir_command(self):
+    def get_mv_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Rmdir(Command):
+class Chmod(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_rmdir_command(self):
+    def initialise_chmod_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_rmdir_command(self):
+    def get_chmod_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
+
+
+class Chown(Command):
+    def __init__(self, command_name, arguments, options):
+        super().__init__(command_name, arguments, options)
+
+    def initialise_chown_command(self):
+        self.set_command_name(self.command_name)
+        self.set_command_arguments(self.arguments)
+        self.set_command_options(self.options)
+
+    def get_chown_command(self):
+        return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
+

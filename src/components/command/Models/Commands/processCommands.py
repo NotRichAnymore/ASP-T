@@ -1,40 +1,40 @@
-from src.components.Models.Commands.commands import Command
+from src.components.command.Models.Commands.commands import Command
 
 
-class Shutdown(Command):
+class Ps(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_shutdown_command(self):
+    def initialise_ps_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_shutdown_command(self):
+    def get_ps_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Halt(Command):
+class Top(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_halt_command(self):
+    def initialise_top_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_halt_command(self):
+    def get_top_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
 
 
-class Reboot(Command):
+class Kill(Command):
     def __init__(self, command_name, arguments, options):
         super().__init__(command_name, arguments, options)
 
-    def initialise_reboot_command(self):
+    def initialise_kill_command(self):
         self.set_command_name(self.command_name)
         self.set_command_arguments(self.arguments)
         self.set_command_options(self.options)
 
-    def get_reboot_command(self):
+    def get_kill_command(self):
         return self.get_command_name(), self.get_command_arguments(), self.get_command_options()
