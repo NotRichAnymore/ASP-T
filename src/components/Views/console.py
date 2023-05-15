@@ -43,10 +43,12 @@ class Console:
         # otherwise return the current theme
         return self.theme
 
+    @pysnooper.snoop()
     def establish_save_folder(self, save_folder=None):
         if save_folder:
-            self.settings_controller.manage_save_folder(save_folder)
-            self.save_folder = save_folder
+            updated_settings = self.settings_controller.manage_save_folder(save_folder)
+            self.save_folder = updated_settings['Files']['save_folder']
+            self.settings = updated_settings
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -95,12 +97,17 @@ class Console:
                                                                 new_theme=self.establish_current_theme())
 
                 elif event == f'load_save_folder_button{self.suffix}':
-                    self.establish_save_folder(values[f'save_folder_input{self.suffix}'])
+                    success = True
+                    save_folder = values[f'save_folder_input{self.suffix}']
+                    self.establish_save_folder(save_folder)
+                    if self.save_folder is None or self.save_folder == save_folder:
+                        success = False
+                    sg.popup_timed(f'Save Folder Changed: {success}?', keep_on_top=True)
 
                 elif event == f'select_folder_button{self.suffix}':
                     save_folder = settings_window_.run_select_folder_window()
                     self.establish_save_folder(save_folder)
-                    window[f'save_folder_input{self.suffix}'].update(settings['Files']['save_folder'])
+                    window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
         except Exception as e:
             window.close()

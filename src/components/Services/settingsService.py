@@ -51,8 +51,9 @@ class SettingsService:
         updated_previous_theme, updated_current_theme = self.repository.get_themes()
         return updated_current_theme
 
+    @pysnooper.snoop()
     def establish_save_folder(self, new_save_folder):
         save_folder = self.repository.get_save_folder()
         if new_save_folder != save_folder and Path(new_save_folder).exists():
-            self.repository.change_save_folder(save_folder)
+            self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()

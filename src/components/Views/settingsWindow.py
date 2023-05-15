@@ -80,7 +80,7 @@ class SettingsWindow:
         background_color = sg.theme_input_background_color()
         layout = [
             [sg.Text('Select a folder for saving!', background_color=background_color)],
-            [sg.FolderBrowse('Select folder', size=(18, 1), auto_size_button=True)],
+            [sg.FolderBrowse('Select folder', size=(18, 1), auto_size_button=True, key='folder_input')],
             [sg.Button('Exit', expand_x=True)]
         ]
 
@@ -89,12 +89,9 @@ class SettingsWindow:
 
         while True:
             event, values = window.read()
-            x = window.size
-            print(x)
-            if event in 'Select Folder':
-                return values['Select Folder']
-            elif event in 'Exit':
-                return None
+            if event in 'Exit':
+                window.close()
+                return None if values['folder_input'] is None else values['folder_input']
 
 
 

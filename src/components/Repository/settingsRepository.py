@@ -94,6 +94,7 @@ class SettingsRepository:
 
         self.set_themes(themes)
 
+    @pysnooper.snoop()
     def change_save_folder(self, save_folder):
         self.read_config()
         self.updater['Files']['save_folder'] = save_folder
