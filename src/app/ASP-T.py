@@ -12,20 +12,24 @@ from src.components.settings.Validator.settingsValidator import SettingsValidato
 from src.components.settings.Services.settingsService import SettingsService
 from src.components.settings.Controllers.settingsController import SettingsController
 
+from src.components.Utilities.loggingUtilities import LoggingUtilities
+
 
 def run_program():
-    settings_repo = SettingsRepository()
-    settings_validator = SettingsValidator()
-    settings_service = SettingsService(settings_repo, settings_validator)
-    settings_controller = SettingsController(settings_service)
+    logger = LoggingUtilities()
+
+    settings_repo = SettingsRepository(logger)
+    settings_validator = SettingsValidator(logger)
+    settings_service = SettingsService(settings_repo, settings_validator, logger)
+    settings_controller = SettingsController(settings_service, logger)
 
     command_repo = CommandRepository()
     command_validator = CommandValidator()
     command_service = CommandService(command_repo, command_validator)
     command_controller = CommandController(command_service)
 
-    window_controller = WindowController()
-    console = Console(command_controller, window_controller, settings_controller)
+    window_controller = WindowController(logger)
+    console = Console(command_controller, window_controller, settings_controller, logger)
     console.run()
 
 

@@ -1,13 +1,15 @@
-from pathlib import Path
+import logging
+
 
 import pysnooper
 
 
 class SettingsService:
-    def __init__(self, repo, validator):
+    def __init__(self, repo, validator, logger):
         self.repository = repo
         self.validator = validator
         self.object_loaded = None
+        self.logger = logger
 
     def create_new_settings_obj(self, default_path):
         settings = self.repository.initialise_config_file(default_path)
@@ -21,10 +23,10 @@ class SettingsService:
         self.object_loaded = True
         return settings
 
-    def present(self, path=None):
-        if path:
-            return Path(path).exists()
-        return False if not self.object_loaded or self.object_loaded is None else True
+    def present(self, path):
+        path_present = self.validator.path_present(self.object_loaded, path)
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'Path present: {path_present}')
+        return path_present
 
     def change_current_theme(self, theme):
         return self.repository.set_theme(theme)
@@ -38,15 +40,14 @@ class SettingsService:
     @pysnooper.snoop()
     def establish_theme(self, new_theme=None):
         previous_theme, current_theme = self.repository.get_themes()
-        if previous_theme is None and current_theme is None and \
-                new_theme == 'SystemDefault' or new_theme == 'Default' or new_theme is None:
-            self.repository.change_theme_order(default=True)
-
-        if previous_theme is None and current_theme == 'SystemDefault':
-            self.repository.change_theme_order(previous=current_theme, current=new_theme)
-
-        if current_theme and previous_theme and new_theme:
-            self.repository.change_theme_order(previous=current_theme, current=new_theme)
+        theme_status = self.validator.theme_status(previous_theme, current_theme, new_theme)
+        match theme_status:
+            case 'default':
+                self.repository.change_theme_order(default=True)
+            case 'update_default':
+                self.repository.change_theme_order(previous=current_theme, current=new_theme)
+            case 'update':
+                self.repository.change_theme_order(previous=current_theme, current=new_theme)
 
         updated_previous_theme, updated_current_theme = self.repository.get_themes()
         return updated_current_theme
@@ -54,6 +55,6 @@ class SettingsService:
     @pysnooper.snoop()
     def establish_save_folder(self, new_save_folder):
         save_folder = self.repository.get_save_folder()
-        if new_save_folder != save_folder and Path(new_save_folder).exists():
+        if self.repository.validate.save_folder(new_save_folder, save_folder):
             self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()

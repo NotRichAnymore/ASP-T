@@ -1,4 +1,5 @@
 from src.components.Utilities.utilities import create_error_message
+import string
 
 
 class CommandService:
@@ -74,4 +75,8 @@ class CommandService:
                                         error_message=None)
 
     def run_command(self, command):
+        pass
+
+
+    def command_order(self):
         pass
