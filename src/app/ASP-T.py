@@ -5,6 +5,9 @@ from src.components.command.Validator.commandValidator import CommandValidator
 from src.components.command.Services.commandService import CommandService
 from src.components.command.Controllers.commandController import CommandController
 
+from src.components.window.Repository.windowRepository import WindowRepository
+from src.components.window.Validator.windowValidator import WindowValidator
+from src.components.window.Services.windowService import WindowService
 from src.components.window.Controllers.windowController import WindowController
 
 from src.components.settings.Repository.settingsRepository import SettingsRepository
@@ -28,7 +31,10 @@ def run_program():
     command_service = CommandService(command_repo, command_validator)
     command_controller = CommandController(command_service)
 
-    window_controller = WindowController(logger)
+    window_repo = WindowRepository(logger)
+    window_validator = WindowValidator(logger)
+    window_service = WindowService(window_repo, window_validator, logger)
+    window_controller = WindowController(window_service, logger)
     console = Console(command_controller, window_controller, settings_controller, logger)
     console.run()
 
