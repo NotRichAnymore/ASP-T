@@ -1,16 +1,17 @@
+import logging
 import sys
-
-import pysnooper
-
-from src.components.Views import settingsWindow, mainWindow
-import PySimpleGUI as sg
-from src.data.files.custom_themes import custom_themes
 import traceback
+import pysnooper
+import PySimpleGUI as sg
+from src.components.Views import settingsWindow, mainWindow
+from src.data.files.custom_themes import custom_themes
+from src.components.Utilities.loggingUtilities import LoggingUtilities
+from pathlib import Path
 
 
 class Console:
 
-    def __init__(self, command_controller, window_controller, settings_controller):
+    def __init__(self, command_controller, window_controller, settings_controller, logger):
         self.save_folder = None
         self.command_controller = command_controller
         self.window_controller = window_controller
@@ -24,6 +25,7 @@ class Console:
         self.main_window_num = 0
         self.settings_window_num = 0
         self.preview_theme_window_num = 0
+        self.logger = logger
 
     def initialise_themes(self):
         for name, theme in zip(self.custom_themes.keys(), self.custom_themes.values()):
@@ -31,6 +33,7 @@ class Console:
 
     @pysnooper.snoop()
     def load_settings(self, default_path=False, path=None):
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Loading Settings')
         self.settings = self.settings_controller.load_settings(default_path, path)
 
     def establish_current_theme(self, theme=None):
@@ -38,9 +41,11 @@ class Console:
         # Send the current theme for updating
         # Change the current one, only if a new theme has been chosen
         if theme:
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Setting New Theme')
             new_theme = self.settings_controller.manage_theme(theme)
             self.theme = new_theme
         # otherwise return the current theme
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Getting Current Theme')
         return self.theme
 
     @pysnooper.snoop()
@@ -65,6 +70,19 @@ class Console:
     def end_program(main_window):
         main_window.close()
         del [main_window]
+
+    def program_setup(self):
+        self.logger.start_logger()
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Starting Program Setup')
+        self.load_settings(default_path=True)
+        self.initialise_themes()
+        settings = self.settings
+        current_theme_from_file = settings['System']['current_theme']
+        self.establish_current_theme(current_theme_from_file)
+        # Set main window as the currently running window and gui is currently running
+        self.update_active_window(None, 'main_window', True)
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Ending Program Setup')
+
 
     @pysnooper.snoop()
     def run_settings_window(self):
@@ -115,16 +133,12 @@ class Console:
 
     @pysnooper.snoop()
     def run(self):
-        self.load_settings(default_path=True)
-        self.initialise_themes()
-        settings = self.settings
-        current_theme_from_file = settings['System']['current_theme']
-        self.establish_current_theme(current_theme_from_file)
+        # Setup Program
+        self.program_setup()
         reload_contents = False
         reload_window = False
-        # Set main window as the currently running window and gui is currently running
-        self.update_active_window(None, 'main_window', True)
-        # Run the main window
+
+        # Setup Window variables
         main_window = mainWindow.MainWindow()
         sg.theme(self.establish_current_theme())
         window = main_window.run_window()
