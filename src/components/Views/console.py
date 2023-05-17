@@ -28,11 +28,11 @@ class Console:
         self.logger = logger
 
     def initialise_themes(self):
-        self.logger.create_new_entry(level=logging.CRITICAL, message='Initialising Themes')
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Initialising Themes')
         for name, theme in zip(self.custom_themes.keys(), self.custom_themes.values()):
             sg.theme_add_new(name, theme)
-            self.logger.create_new_entry(level=logging.DEBUG, message=f'Adding Theme: {name}')
-        self.logger.create_new_entry(level=logging.CRITICAL, message='Themes set')
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Adding Theme: {name}')
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Themes set')
 
     @pysnooper.snoop()
     def load_settings(self, default_path=False, path=None):
@@ -56,10 +56,10 @@ class Console:
     def establish_save_folder(self, save_folder=None):
         if save_folder:
             updated_settings = self.settings_controller.manage_save_folder(save_folder)
-            self.logger.create_new_entry(level=logging.CRITICAL, message='Save Folder Updated')
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Save Folder Updated')
             self.save_folder = updated_settings['Files']['save_folder']
             self.settings = updated_settings
-            self.logger.create_new_entry(level=logging.CRITICAL, message='Settings Updated')
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -67,11 +67,11 @@ class Console:
         return self.command_controller.run_command(command)
 
     def get_active_window(self):
-        self.logger.create_new_entry(level=logging.CRITICAL, message='Getting active window')
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Getting active window')
         return self.window_controller.get_active_window()
 
     def update_active_window(self, window_to_close, active_window, program_running=None):
-        self.logger.create_new_entry(level=logging.CRITICAL, message='Updating active window')
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Updating active window')
         self.window_controller.update_active_window_(window_to_close, active_window, program_running)
 
     @staticmethod
@@ -155,6 +155,7 @@ class Console:
             try:
                 if reload_window:
                     self.main_window_num += 1
+                    self.logger.create_log_entry(level=logging.DEBUG, message='Creating New Window')
                     window = main_window.create_new_window(window_num=str(self.main_window_num),
                                                            new_theme=self.establish_current_theme())
                     reload_window = False
@@ -162,6 +163,7 @@ class Console:
                 self.suffix = "_" + str(self.main_window_num)
 
                 if not main_loop:
+                    self.logger.create_log_entry(level=logging.ERROR, message='Closing Program')
                     break
 
                 run_event_loop = True
@@ -170,9 +172,8 @@ class Console:
                         for line in self.window_controller.load_console_output():
                             print(line)
                         reload_contents = False
+
                     event, values = window.read()
-
-
                     # If Exit button is pressed on the main menu
                     if event == f'main_window_exit_button{self.suffix}':
                         #  update the active window manager

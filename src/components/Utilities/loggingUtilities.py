@@ -15,6 +15,11 @@ class LoggingUtilities:
         self.logger = None
 
 
+    def clear_previous_logs(self):
+        path = Path('src').resolve().parent.parent.joinpath('data/files/output.log').as_posix()
+        with open(path, 'w+') as log_file:
+            log_file.write('\n')
+
     def setup_logger(self):
         self.logger = logging.getLogger('System_logger')
         self.logger.setLevel(logging.DEBUG)
@@ -37,5 +42,6 @@ class LoggingUtilities:
         self.logger.log(level=level, msg=message)
 
     def start_logger(self):
+        self.clear_previous_logs()
         self.setup_logger()
         self.create_log_entry(level=logging.CRITICAL, message='Starting logger')
