@@ -135,6 +135,12 @@ class Console:
                     self.establish_save_folder(save_folder)
                     window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
+                elif event == f'set_user_button{self.suffix}':
+                    pass
+
+                elif event == f'load_user_button{self.suffix}':
+                    pass
+
         except Exception as e:
             window.close()
             del[window]

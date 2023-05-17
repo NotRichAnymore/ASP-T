@@ -32,6 +32,13 @@ class SettingsWindow:
         self.save_folder = sg.Text('Save Folder: ')
         self.save_folder_input = sg.Input(default_text='', expand_x=True, key='save_folder_input_0')
         self.save_folder_button = sg.Button('Select Folder', expand_x=True, key='select_folder_button_0')
+
+
+        self.user_text = sg.Text('Username: ')
+        self.password_text = sg.Text('Password: ')
+        self.username_input = sg.Input(default_text='', expand_x=True, key='username_input_0')
+        self.password_input = sg.Input(default_text='', expand_x=True, key='password_input_0')
+        self.user_details_button = sg.Button('Set User Details', expand_x=True, key='set_user_button_0')
         self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button_0')
 
     def get_preview_themes_window_layout(self, suffix, new_theme=None):
@@ -118,6 +125,9 @@ class SettingsWindow:
         tab_layout = [
             [self.save_folder, self.save_folder_input],
             [self.save_folder_button],
+            [self.user_text, self.username_input],
+            [self.password_text, self.password_text],
+            [self.user_details_button],
             [self.load_user_details_button]
         ]
         layout = sg.Tab('Files', tab_layout, key='files_tab')
@@ -171,7 +181,11 @@ class SettingsWindow:
             [sg.Text('Save Folder: '),
              sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
             [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')],
+            [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
+            [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, key='password_input_0')],
+            [sg.Button('Set User Details', expand_x=True, key='set_user_button_0')],
             [sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
+
         ]
         new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
         new_tab_layout = [[new_files_tab], [new_system_tab]]

@@ -8,7 +8,8 @@ class MainWindow:
     def __init__(self):
         image_folder = Path('src').resolve().parent.parent.joinpath('data/images').as_posix()
         self.image_folder = image_folder
-        self.title_text = sg.Text(text='ASP-T CMD Prompt', font=('Commodore 64 Angled', '12'), key='program_title_0')
+        self.title_text = sg.Text(text='ASP-T CMD Prompt', background_color=sg.theme_background_color(),
+                                  font=('Commodore 64 Angled', '12'), key='program_title_0')
 
         self.settings_button = sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('settings_icon.png').as_posix(),
@@ -33,6 +34,8 @@ class MainWindow:
 
 
         self.command_prompt = sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
+                                      text_color=sg.theme_text_color(),
+                                      background_color=sg.theme_background_color(),
                                       font=('Commodore 64 Angled', '10'), key='command_prompt_0')
 
         self.command_arguments = sg.Input(expand_x=True, font=('Commodore 64 Angled', '10'),
