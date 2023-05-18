@@ -61,6 +61,11 @@ class Console:
             self.settings = updated_settings
             self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
 
+    def establish_user_variables(self, username, password):
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
+        success = self.settings_controller.set_credentials(username, password)
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'User Details created: {success}')
+
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
         # (command)
@@ -136,7 +141,9 @@ class Console:
                     window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
                 elif event == f'set_user_button{self.suffix}':
-                    pass
+                    username = values[f'username_input{self.suffix}']
+                    password = values[f'password_input{self.suffix}']
+                    self.establish_user_variables(username, password)
 
                 elif event == f'load_user_button{self.suffix}':
                     pass
@@ -207,7 +214,7 @@ class Console:
                     elif event == f'load_input_button{self.suffix}':
                         command_arguments = values[f'command_arguments{self.suffix}']
                         print(command_arguments)
-                        #print(self.execute_command(command_arguments))
+                        print(self.execute_command(command_arguments))
 
                     if not run_event_loop:
                         break
@@ -215,7 +222,8 @@ class Console:
 
 
             except Exception as e:
-                sg.popup_error(e.with_traceback(traceback.print_exc(file=sys.stdout)))
+                sg.popup_error(e.with_traceback(traceback.print_exc(file=sys.stdout)),
+                               auto_close=True, auto_close_duration=0.01)
                 continue
                 # sg.popup_error(e.with_traceback(traceback.print_exc(file=sys.stdout)), keep_on_top=True)
                 # self.settings_controller.get_previous_theme()

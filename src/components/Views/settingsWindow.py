@@ -127,8 +127,7 @@ class SettingsWindow:
             [self.save_folder_button],
             [self.user_text, self.username_input],
             [self.password_text, self.password_text],
-            [self.user_details_button],
-            [self.load_user_details_button]
+            [self.user_details_button, self.load_user_details_button]
         ]
         layout = sg.Tab('Files', tab_layout, key='files_tab')
         return layout
@@ -182,9 +181,9 @@ class SettingsWindow:
              sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
             [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')],
             [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
-            [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, key='password_input_0')],
-            [sg.Button('Set User Details', expand_x=True, key='set_user_button_0')],
-            [sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
+            [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, key=f'password_input{suffix}')],
+            [sg.Button('Set User Details', expand_x=True, key=f'set_user_butto{suffix}'),
+            sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
 
         ]
         new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')

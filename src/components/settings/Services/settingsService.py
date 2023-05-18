@@ -58,3 +58,45 @@ class SettingsService:
         if self.repository.validate.save_folder(new_save_folder, save_folder):
             self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()
+
+    def initialise_user(self, username, password):
+        #  Create encrypted password, which is a reference to actual password
+        internal_password = self.create_encrypted_password(password)
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'Encrypted password created for {username}')
+        #  Ensure that password references encrypted password not vice versa
+        if self.validator.validate_password(password, internal_password):
+            # If so build a user details object
+            user_details = self.repository.create_new_user_details(username, password, internal_password)
+            self.logger.create_log_entry(level=logging.DEBUG,
+                                         message=f'New user details object created: {user_details}')
+            # Make a reference in the settings ini file
+            self.repository.establish_credential_variables(user_details)
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
+            # Save the username and encrypted password to the database
+            success = self.repository.save_user_details(user_details)
+            return success
+        # password fails to reference encrypted password (system error) inform the logger and exit method
+        self.logger.create_log_entry(level=logging.ERROR, message=f'Failure to encrypt password for {username}')
+
+    def load_user(self, username, password):
+        # User has been identified so query database for user details
+        users = self.repository.get_all_users()
+        if self.validator.validate_username(username, users):
+            user_details = self.repository.get_user_details(username, password)
+            self.repository.establish_credential_variables(user_details)
+            return self.validator.validate_credentials(user_details)
+
+    def credential_handling(self, username, password):
+        #  Credentials should have pre-defined format standard
+        if self.validator.valid_credential_format(username, password):
+            # If user not found start user creation processes
+            if not self.validator.check_user_exist(username):
+                self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: False')
+                return self.initialise_user(username, password)
+
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: True')
+            return self.load_user(username, password)
+
+        # If fail to match the format, inform the logger and exit method
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Username or password is invalid')
+

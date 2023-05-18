@@ -26,3 +26,6 @@ class SettingsController:
     def manage_save_folder(self, save_folder):
         return self.service.establish_save_folder(save_folder)
 
+    def set_user_credentials(self, username, password):
+        return self.service.credential_handling(username, password)
+
