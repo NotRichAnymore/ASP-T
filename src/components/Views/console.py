@@ -183,7 +183,7 @@ class Console:
                 while run_event_loop:
                     if self.main_window_num > 0 and reload_contents:
                         for line in self.window_controller.load_console_output():
-                            print(line)
+                            print(line.rstrip())
                         reload_contents = False
 
                     event, values = window.read()
