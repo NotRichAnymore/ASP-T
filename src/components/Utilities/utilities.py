@@ -1,7 +1,8 @@
+import hashlib
 import os
 import json
 import sys
-
+import bcrypt
 import configupdater as configupdater
 import pandas as pd
 import base64
@@ -224,3 +225,12 @@ def initialise_images(directory):
 
 def create_error_message(error_type, message, error_message):
     return f'Error Type: {error_type}, {message} \nError Message: {error_message}'
+
+
+def hash_password(string):
+    x = [(char + byte) for char, byte in zip(string, bcrypt.gensalt())]
+    return bcrypt.hashpw(base64.b64encode(hashlib.sha256(x)), bcrypt.gensalt())
+
+
+
+

@@ -6,6 +6,7 @@ import PySimpleGUI as sg
 from pathlib import Path
 from src.components.Utilities.utilities import create_error_message
 from src.components.settings.Models.Settings import Settings
+from src.components.settings.Models.User import User
 import pysnooper
 
 
@@ -13,6 +14,7 @@ class SettingsRepository:
 
     def __init__(self, logger):
         self.model = Settings()
+        self.user_model = User()
         self.updater = configupdater.ConfigUpdater()
         self.parser = configparser.ConfigParser()
         self.default_save_folder = Path('src').resolve().parent.parent\
@@ -185,6 +187,9 @@ class SettingsRepository:
                 config.ini = {self.config_path}
                 save_folder = {self.default_save_folder}
                 user_details_path = {self.default_user_details_path}
+                
+                [Users]
+                guest
                 """
             self.load_updater(config_contents)
             self.logger.create_log_entry(level=logging.INFO, message=f'Reading from {self.config_path}')
@@ -227,8 +232,19 @@ class SettingsRepository:
             self.set_inital_config_path(default_config_path)
             return self.create_initial_settings()
 
+    def create_new_user_details(self, username, hashed_password):
+        return self.user_model.create_user_details(username, hashed_password)
 
+    def establish_credential_variables(self, user_details):
+        self.read_config()
+        self.updater['Users']['guest'].add_after.option(key=user_details.get_username())
+        self.write_to_config()
 
-            # return create_error_message(error_type='settings',
-            #                            message=f'Unable to initialise settings path {config_path}',
-            #                            error_message=str(e))
+    def save_user_details(self, user_details):
+        pass
+
+    def get_all_users(self):
+        pass
+
+    def get_user_details(self, username, password):
+        pass

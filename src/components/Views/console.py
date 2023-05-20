@@ -64,7 +64,8 @@ class Console:
     def establish_user_variables(self, username, password):
         self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
         success = self.settings_controller.set_credentials(username, password)
-        self.logger.create_log_entry(level=logging.CRITICAL, message=f'User Details created: {success}')
+        self.logger.create_log_entry(level=logging.CRITICAL,
+                                     message=f'User Details created: {success if success is not None else False}')
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)

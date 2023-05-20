@@ -1,7 +1,6 @@
 import logging
-
-
 import pysnooper
+from src.components.Utilities.utilities import hash_password
 
 
 class SettingsService:
@@ -59,16 +58,17 @@ class SettingsService:
             self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()
 
+
+
     def initialise_user(self, username, password):
         #  Create encrypted password, which is a reference to actual password
-        internal_password = self.create_encrypted_password(password)
+        hashed_password = hash_password(password)
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Encrypted password created for {username}')
         #  Ensure that password references encrypted password not vice versa
-        if self.validator.validate_password(password, internal_password):
+        if self.validator.validate_password(password, hashed_password):
             # If so build a user details object
-            user_details = self.repository.create_new_user_details(username, password, internal_password)
-            self.logger.create_log_entry(level=logging.DEBUG,
-                                         message=f'New user details object created: {user_details}')
+            user_details = self.repository.create_new_user_details(username, hashed_password)
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'New user details object created')
             # Make a reference in the settings ini file
             self.repository.establish_credential_variables(user_details)
             self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
