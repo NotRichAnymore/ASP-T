@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 from pathlib import Path
-
+from src.data.files.settings_help import files_tab, system_tab, database_tab
 import pysnooper
 
 
@@ -13,6 +13,9 @@ class SettingsWindow:
         self.image_folder = image_folder
         self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
                                   key='settings_window_title_0')
+        self.help_button = sg.Button(tooltip='Settings Help', image_subsample=16, image_size=(16,16),
+                                     image_filename=Path(image_folder).joinpath('help_icon.png').as_posix(),
+                                     key='settings_window_help_button_0')
 
         self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
@@ -82,6 +85,7 @@ class SettingsWindow:
             if event in f'close_preview_theme_window{self.preview_themes_suffix}':
                 window.close()
                 break
+
     @pysnooper.snoop()
     def run_select_folder_window(self):
         background_color = sg.theme_input_background_color()
@@ -101,6 +105,36 @@ class SettingsWindow:
                 return None if values['folder_input'] is None else values['folder_input']
 
 
+    def run_help_window(self, window_num, theme):
+        sg.theme(theme)
+        suffix = '_' + str(window_num)
+
+        layout = [
+            [sg.Text('Settings Help', justification='center')],
+            [sg.Text('Files', justification='center')],
+            [sg.Multiline(expand_x=True, expand_y=True, key=f'files_output{suffix}', do_not_clear=True,
+                          horizontal_scroll=True)],
+            [sg.Text('System', justification='center')],
+            [sg.Multiline(expand_x=True, expand_y=True, key=f'system_output{suffix}', do_not_clear=True,
+                          horizontal_scroll=True)],
+            [sg.Text('Database', justification='center')],
+            [sg.Multiline(expand_x=True, expand_y=True, key=f'database_output{suffix}', do_not_clear=True,
+                          horizontal_scroll=True)],
+            [sg.Button('Close', expand_x=True, key=f'settings_help_close{suffix}')]
+        ]
+        window = sg.Window(f'Settings Help{suffix}', layout, modal=True, keep_on_top=True, no_titlebar=True,
+                           grab_anywhere=True, size=(500, 500), finalize=True)
+        while True:
+
+            window[f'files_output{suffix}'].update((f"Save Folder: {files_tab['Save Folder']}\n"))
+            window[f'system_output{suffix}'].update((f"Theme: {system_tab['Theme']}\n"))
+            window[f'database_output{suffix}'].update((f"{database_tab['Database']}\n"
+                                                       f"Username: {database_tab['Username']}\n"
+                                                       f"Password: {database_tab['Password']}"))
+            event, values = window.read()
+            if event in f'settings_help_close{suffix}':
+                window.close()
+                break
 
 
 
@@ -110,7 +144,7 @@ class SettingsWindow:
         return 'ASP-T CMD Prompt (Settings)'
 
     def set_toolbar_layout(self):
-        layout = self.title_text, self.minimise_button, self.maximise_button, self.exit_button
+        layout = self.title_text, self.help_button, self.minimise_button, self.maximise_button, self.exit_button
         return layout
 
     def set_system_tab(self):
@@ -124,13 +158,20 @@ class SettingsWindow:
     def set_files_tab(self):
         tab_layout = [
             [self.save_folder, self.save_folder_input],
-            [self.save_folder_button],
+            [self.save_folder_button]
+        ]
+        layout = sg.Tab('Files', tab_layout, key='files_tab')
+        return layout
+
+    def set_database_tab(self):
+        tab_layout = [
             [self.user_text, self.username_input],
             [self.password_text, self.password_text],
             [self.user_details_button, self.load_user_details_button]
         ]
-        layout = sg.Tab('Files', tab_layout, key='files_tab')
+        layout = sg.Tab('Database', tab_layout, key='database_tab')
         return layout
+
 
     def build_tab_group(self):
         layout = sg.TabGroup([
@@ -157,6 +198,9 @@ class SettingsWindow:
         new_title = (self.get_title() + suffix)
         new_title_layout = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
                                    key=f'settings_window_title{suffix}'), \
+            sg.Button(tooltip='Settings Help', image_subsample=16, image_size=(16, 16),
+                      image_filename=Path(self.image_folder).joinpath('help_icon.png').as_posix(),
+                      key=f'settings_window_help_button{suffix}'), \
             sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
                       image_filename=Path(self.image_folder).joinpath('minimise_icon.png').as_posix(),
                       key=f'settings_window_minimise_button{suffix}'), \
@@ -169,25 +213,28 @@ class SettingsWindow:
             sg.Button(visible=False, bind_return_key=True, key=f'load_save_folder_button{suffix}')
 
         new_files_tab_layout = [
+            [sg.Text('Save Folder: '),
+             sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
+            [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')]
+        ]
+        new_files_tab = sg.Tab('Files', new_files_tab_layout, key=f'files_tab{suffix}')
+
+        new_system_tab_layout = [
             [sg.Text(f'Theme: {sg.theme()}', key=f'current_theme_text{suffix}')],
             [sg.Button(button_text='Change current theme', expand_x=True,
                        key=f'program_theme_button{suffix}')]
         ]
+        new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
 
-        new_files_tab = sg.Tab('Files', new_files_tab_layout, key=f'files_tab{suffix}')
-
-        new_system_tab_layout = [
-            [sg.Text('Save Folder: '),
-             sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
-            [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')],
+        new_database_tab_layout = [
             [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
             [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, key=f'password_input{suffix}')],
-            [sg.Button('Set User Details', expand_x=True, key=f'set_user_butto{suffix}'),
-            sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
-
+            [sg.Button('Set User Details', expand_x=True, key=f'set_user_button{suffix}'),
+             sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
         ]
-        new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
-        new_tab_layout = [[new_files_tab], [new_system_tab]]
+        new_database_tab = sg.Tab('Database', layout=new_database_tab_layout, key=f'database_tab{suffix}'
+                                  )
+        new_tab_layout = [[new_files_tab], [new_system_tab], [new_database_tab]]
         new_tab_group = sg.TabGroup(new_tab_layout, expand_x=True)
 
         new_layout = [

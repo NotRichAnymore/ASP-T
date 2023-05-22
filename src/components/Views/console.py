@@ -25,6 +25,7 @@ class Console:
         self.main_window_num = 0
         self.settings_window_num = 0
         self.preview_theme_window_num = 0
+        self.help_window_num = 0
         self.logger = logger
 
     def initialise_themes(self):
@@ -63,7 +64,7 @@ class Console:
 
     def establish_user_variables(self, username, password):
         self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
-        success = self.settings_controller.set_credentials(username, password)
+        success = self.settings_controller.set_user_credentials(username, password)
         self.logger.create_log_entry(level=logging.CRITICAL,
                                      message=f'User Details created: {success if success is not None else False}')
 
@@ -118,6 +119,9 @@ class Console:
                     if self.get_active_window() != 'settings_window':
                         window.close()
                         break
+
+                elif event == f'settings_window_help_button{self.suffix}':
+                    settings_window_.run_help_window(self.help_window_num, self.establish_current_theme())
 
                 elif event == f'program_theme_button{self.suffix}':
                     updated_theme = settings_window_.run_preview_themes_window(self.preview_theme_window_num,
