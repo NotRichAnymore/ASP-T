@@ -228,8 +228,7 @@ def create_error_message(error_type, message, error_message):
 
 
 def hash_password(string):
-    x = [(char + byte) for char, byte in zip(string, bcrypt.gensalt())]
-    return bcrypt.hashpw(base64.b64encode(hashlib.sha256(x)), bcrypt.gensalt())
+    return bcrypt.hashpw(base64.b64encode(bytes(string, 'utf-8')), bcrypt.gensalt())
 
 
 

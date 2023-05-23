@@ -1,7 +1,13 @@
+import base64
 import logging
+import re
 from pathlib import Path
 
+import bcrypt
+import pysnooper
 
+
+@pysnooper.snoop()
 class SettingsValidator:
     def __init__(self, logger):
         self.logger = logger
@@ -30,3 +36,31 @@ class SettingsValidator:
             return True
         self.logger.create_log_entry(level=logging.DEBUG, message=f'New save folder {new_save_folder} not valid')
         return False
+
+    @staticmethod
+    def validate_username(username, users):
+        return True if username in users else False
+
+    @staticmethod
+    def validate_password(password, hashed_password):
+        return bcrypt.checkpw(base64.b64encode(bytes(password, 'utf-8')), hashed_password)
+
+    def validate_credentials(self, username_from_input, password_from_input, user_details_from_database):
+        if username_from_input == user_details_from_database[0] \
+                and self.validate_password(password_from_input, user_details_from_database[1]):
+            return True
+        return False
+
+    def valid_credential_format(self, username, password):
+        # regex check for 8+ latin chars, no special chars outside standard nums and symbols
+        # regex check for 8+ latin chars, 2 numbers, 1 symbol
+        # if u and p both pass return true else false and let logger know which failed.
+        username_format = r"^([a-z|A-Z|\u00C0-\u00FF]{8,16})$"
+        password_format = r"(((?=\S*[A-Z])(?=\S*[a-z])(?=\S*\d)(?=\S*[\!\"\£\$\%\^&\*\(\)?\_\~\@\:\;\<\>\/\[\]\\])\S{8,16}))"
+        if re.match(username_format, username) and re.match(password_format, password):
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Username and Password format is valid')
+            return True
+        return False
+
+
+
