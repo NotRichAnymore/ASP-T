@@ -251,11 +251,14 @@ class SettingsRepository:
         self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
 
     def database_exists(self):
-        databases = self.sql.show_all_databases()
-        for db_name in range(len(databases)):
-            if 'aspt' in databases[db_name][0]:
-                return True
-        return False
+        try:
+            databases = self.sql.show_all_databases()
+            for db_name in range(len(databases)):
+                if 'aspt' in databases[db_name][0]:
+                    return True
+            return False
+        except Exception as e:
+            return False
 
     def intialise_database(self, user, password):
         error = self.sql.initialise_db(user, password)

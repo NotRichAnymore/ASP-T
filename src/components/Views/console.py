@@ -146,9 +146,7 @@ class Console:
                     window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
                 elif event == f'set_user_button{self.suffix}':
-                    username = values[f'username_input{self.suffix}']
-                    password = values[f'password_input{self.suffix}']
-                    self.establish_user_variables(username, password)
+                    self.establish_user_variables(values[f'username_input{self.suffix}'], values[f'password_input{self.suffix}'])
 
                 elif event == f'load_user_button{self.suffix}':
                     pass
