@@ -40,7 +40,7 @@ class SettingsWindow:
         self.user_text = sg.Text('Username: ')
         self.password_text = sg.Text('Password: ')
         self.username_input = sg.Input(default_text='', expand_x=True, key='username_input_0')
-        self.password_input = sg.Input(default_text='', expand_x=True, key='password_input_0')
+        self.password_input = sg.Input(default_text='', expand_x=True, password_char='x', key='password_input_0')
         self.user_details_button = sg.Button('Set User Details', expand_x=True, key='set_user_button_0')
         self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button_0')
 
@@ -228,7 +228,8 @@ class SettingsWindow:
 
         new_database_tab_layout = [
             [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
-            [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, key=f'password_input{suffix}')],
+            [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, password_char='X',
+                                             key=f'password_input{suffix}')],
             [sg.Button('Set User Details', expand_x=True, key=f'set_user_button{suffix}'),
              sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
         ]

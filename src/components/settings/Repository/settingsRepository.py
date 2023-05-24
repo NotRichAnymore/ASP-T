@@ -4,9 +4,11 @@ import configupdater
 import configparser
 import PySimpleGUI as sg
 from pathlib import Path
-from src.components.Utilities.utilities import create_error_message
+from src.components.Utilities.mySQLUtilities import MySQLUtilities
 from src.components.settings.Models.Settings import Settings
 from src.components.settings.Models.User import User
+from mysql.connector import Error
+
 import pysnooper
 
 
@@ -14,7 +16,6 @@ class SettingsRepository:
 
     def __init__(self, logger):
         self.model = Settings()
-        self.user_model = User()
         self.updater = configupdater.ConfigUpdater()
         self.parser = configparser.ConfigParser()
         self.default_save_folder = Path('src').resolve().parent.parent\
@@ -31,6 +32,7 @@ class SettingsRepository:
         self.themes = None, None
 
         self.logger = logger
+        self.sql = MySQLUtilities(host='127.0.0.1', username='test_user', password='test_pass763', database=None)
 
     def get_config_path(self):
         self.logger.create_log_entry(level=logging.DEBUG,
@@ -189,7 +191,7 @@ class SettingsRepository:
                 user_details_path = {self.default_user_details_path}
                 
                 [Users]
-                guest
+                guest = Default
                 """
             self.load_updater(config_contents)
             self.logger.create_log_entry(level=logging.INFO, message=f'Reading from {self.config_path}')
@@ -232,19 +234,45 @@ class SettingsRepository:
             self.set_inital_config_path(default_config_path)
             return self.create_initial_settings()
 
-    def create_new_user_details(self, username, hashed_password):
-        return self.user_model.create_user_details(username, hashed_password)
+    @staticmethod
+    def create_new_user_details(username, hashed_password):
+        return User(username, hashed_password)
 
     def establish_credential_variables(self, user_details):
         self.read_config()
-        self.updater['Users']['guest'].add_after.option(key=user_details.get_username())
-        self.write_to_config()
+        username = user_details.get_username()
+        current_users = self.updater.options('Users')
+        # User details should be present already, last check in case wasn't written before
+        if username not in current_users:
+            self.updater['Users'][current_users[-1]].add_after.option(key=username)
+            self.write_to_config()
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
+
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
+
+    def database_exists(self):
+        databases = self.sql.show_all_databases()
+        for db_name in range(len(databases)):
+            if 'aspt' in databases[db_name][0]:
+                return True
+        return False
+
+    def intialise_database(self, user, password):
+        error = self.sql.initialise_db(user, password)
+        if error:
+            self.logger.create_log_entry(level=logging.ERROR, message=f'Issue with Database: {error}')
 
     def save_user_details(self, user_details):
-        pass
+        self.sql.insert_into_users_table(user_details.get_username(), user_details.get_password())
+        if user_details in self.sql.get_last_entry():
+            return True
+        return False
 
     def get_all_users(self):
-        pass
+        return self.sql.get_all_users()
 
     def get_user_details(self, username, password):
         pass
+
+    def check_user_exists(self, username):
+        return True if username in self.get_all_users() else False

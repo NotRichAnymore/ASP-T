@@ -3,6 +3,7 @@ import pysnooper
 from src.components.Utilities.utilities import hash_password
 
 
+@pysnooper.snoop()
 class SettingsService:
     def __init__(self, repo, validator, logger):
         self.repository = repo
@@ -36,7 +37,7 @@ class SettingsService:
     def get_previous_theme(self):
         return self.repository.get_last_theme()
 
-    @pysnooper.snoop()
+
     def establish_theme(self, new_theme=None):
         previous_theme, current_theme = self.repository.get_themes()
         theme_status = self.validator.theme_status(previous_theme, current_theme, new_theme)
@@ -51,13 +52,12 @@ class SettingsService:
         updated_previous_theme, updated_current_theme = self.repository.get_themes()
         return updated_current_theme
 
-    @pysnooper.snoop()
+
     def establish_save_folder(self, new_save_folder):
         save_folder = self.repository.get_save_folder()
         if self.repository.validate.save_folder(new_save_folder, save_folder):
             self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()
-
 
 
     def initialise_user(self, username, password):
@@ -66,17 +66,17 @@ class SettingsService:
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Encrypted password created for {username}')
         #  Ensure that password references encrypted password not vice versa
         if self.validator.validate_password(password, hashed_password):
+            self.logger.create_log_entry(level=logging.DEBUG, message='Password matches encrypted version')
             # If so build a user details object
             user_details = self.repository.create_new_user_details(username, hashed_password)
             self.logger.create_log_entry(level=logging.DEBUG, message=f'New user details object created')
             # Make a reference in the settings ini file
             self.repository.establish_credential_variables(user_details)
-            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
             # Save the username and encrypted password to the database
             success = self.repository.save_user_details(user_details)
             return success
         # password fails to reference encrypted password (system error) inform the logger and exit method
-        self.logger.create_log_entry(level=logging.ERROR, message=f'Failure to encrypt password for {username}')
+        self.logger.create_log_entry(level=logging.ERROR, message=f'Password does not match encrypted password')
 
     def load_user(self, username, password):
         # User has been identified so query database for user details
@@ -87,10 +87,13 @@ class SettingsService:
             return self.validator.validate_credentials(user_details)
 
     def credential_handling(self, username, password):
+        if not self.repository.database_exists():
+            self.repository.intialise_database(username, password)
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Initialising database')
         #  Credentials should have pre-defined format standard
         if self.validator.valid_credential_format(username, password):
             # If user not found start user creation processes
-            if not self.validator.check_user_exist(username):
+            if not self.repository.check_user_exists(username):
                 self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: False')
                 return self.initialise_user(username, password)
 
