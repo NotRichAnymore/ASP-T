@@ -63,4 +63,8 @@ class SettingsValidator:
         return False
 
 
-
+    def validate_database_entry(self, database_entry, user_details):
+        if (user_details.get_username() == database_entry[0]) and \
+                (user_details.get_password() == bytes(database_entry[1], 'utf-8')):
+            return True
+        return False

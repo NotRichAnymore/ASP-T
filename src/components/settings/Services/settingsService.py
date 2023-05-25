@@ -73,7 +73,10 @@ class SettingsService:
             # Make a reference in the settings ini file
             self.repository.establish_credential_variables(user_details)
             # Save the username and encrypted password to the database
-            success = self.repository.save_user_details(user_details)
+            last_entry = self.repository.save_user_details(user_details)
+            # check last entry corresponds to defined credentails
+            success = self.validator.validate_database_entry(last_entry[0], user_details)
+            self.repository.close_connection()
             return success
         # password fails to reference encrypted password (system error) inform the logger and exit method
         self.logger.create_log_entry(level=logging.ERROR, message=f'Password does not match encrypted password')
@@ -84,6 +87,7 @@ class SettingsService:
         if self.validator.validate_username(username, users):
             user_details = self.repository.get_user_details(username, password)
             self.repository.establish_credential_variables(user_details)
+            self.repository.close_connection()
             return self.validator.validate_credentials(user_details)
 
     def credential_handling(self, username, password):

@@ -8,10 +8,10 @@ from src.components.Utilities.mySQLUtilities import MySQLUtilities
 from src.components.settings.Models.Settings import Settings
 from src.components.settings.Models.User import User
 from mysql.connector import Error
-
 import pysnooper
 
 
+@pysnooper.snoop()
 class SettingsRepository:
 
     def __init__(self, logger):
@@ -93,7 +93,6 @@ class SettingsRepository:
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Setting theme as {themes} from {self.themes}')
         self.themes = themes
 
-    @pysnooper.snoop()
     def set_initial_vars(self):
         self.logger.create_log_entry(level=logging.DEBUG, message='Setting repository variables')
         themes = (self.updater['System']['previous_theme'].value, self.updater['System']['current_theme'].value)
@@ -104,7 +103,6 @@ class SettingsRepository:
         self.logger.create_log_entry(level=logging.DEBUG, message='Repository variables set')
 
         
-    @pysnooper.snoop()
     def change_theme_order(self, previous=None, current=None, default=None):
         self.read_config()
         self.logger.create_log_entry(level=logging.INFO, message='Changing theme order')
@@ -126,7 +124,6 @@ class SettingsRepository:
         self.logger.create_log_entry(level=logging.INFO, message='Theme order changed')
 
 
-    @pysnooper.snoop()
     def change_save_folder(self, save_folder):
         self.read_config()
         self.logger.create_log_entry(
@@ -137,7 +134,6 @@ class SettingsRepository:
         self.set_save_folder(save_folder)
         self.logger.create_log_entry(level=logging.INFO, message='Save folder changed')
 
-    @pysnooper.snoop()
     def create_existing_settings(self):
         self.read_config()
         self.logger.create_log_entry(level=logging.INFO, message=f'Creating existing settings from {self.config_path}')
@@ -176,7 +172,6 @@ class SettingsRepository:
         self.updater.read_string(config_contents)
         self.logger.create_log_entry(level=logging.INFO, message='Loading updater with settings contents')
 
-    @pysnooper.snoop()
     def create_initial_settings(self):
         try:
             self.logger.create_log_entry(level=logging.INFO, message='Filling settings contents')
@@ -207,7 +202,6 @@ class SettingsRepository:
                 configparser.ParsingError) as e:
             self.logger.create_log_entry(level=logging.ERROR, message=f'Unable to create initial settings, Stack Trace:{str(e)}')
 
-    @pysnooper.snoop()
     def initialise_config_file(self, default_path, config_path=None):
         default_config_path = Path(self.default_config_path).as_posix()
         try:
@@ -244,11 +238,11 @@ class SettingsRepository:
         current_users = self.updater.options('Users')
         # User details should be present already, last check in case wasn't written before
         if username not in current_users:
-            self.updater['Users'][current_users[-1]].add_after.option(key=username)
-            self.write_to_config()
+            self.updater['Users'][current_users[-1]].add_after.option(key=username, allow_no_value=True)
+            self.updater.update_file()
             self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
-
-        self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
+        else:
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
 
     def database_exists(self):
         try:
@@ -267,9 +261,7 @@ class SettingsRepository:
 
     def save_user_details(self, user_details):
         self.sql.insert_into_users_table(user_details.get_username(), user_details.get_password())
-        if user_details in self.sql.get_last_entry():
-            return True
-        return False
+        return self.sql.get_last_entry()
 
     def get_all_users(self):
         return self.sql.get_all_users()
@@ -277,5 +269,12 @@ class SettingsRepository:
     def get_user_details(self, username, password):
         pass
 
-    def check_user_exists(self, username):
-        return True if username in self.get_all_users() else False
+    def check_user_exists(self, username=None):
+        if username:
+            return True if username == self.sql.get_user_by_name(username) else False
+
+        latest_user = self.updater.options('Users')[-1]
+        return True if self.updater['Users'][latest_user].value in self.sql.get_last_entry() else False
+
+    def close_connection(self):
+        self.sql.close_connection()

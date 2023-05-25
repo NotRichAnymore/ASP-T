@@ -165,7 +165,8 @@ class Console:
         # Setup Window variables
         main_window = mainWindow.MainWindow()
         sg.theme(self.establish_current_theme())
-        window = main_window.run_window()
+        window = main_window.create_new_window(window_num='0',
+                                               new_theme=self.establish_current_theme())
         main_loop = True
         while main_loop:
             try:
