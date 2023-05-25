@@ -238,7 +238,7 @@ class SettingsRepository:
         current_users = self.updater.options('Users')
         # User details should be present already, last check in case wasn't written before
         if username not in current_users:
-            self.updater['Users'][current_users[-1]].add_after.option(key=username, allow_no_value=True)
+            self.updater['Users'][current_users[-1]].add_after.option(key=username, value='initialised')
             self.updater.update_file()
             self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
         else:
