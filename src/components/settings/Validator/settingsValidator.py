@@ -39,7 +39,13 @@ class SettingsValidator:
 
     @staticmethod
     @pysnooper.snoop()
-    def validate_username(username, users):
+    def validate_username(expected, actual):
+        return True if expected == actual else False
+
+
+    @staticmethod
+    @pysnooper.snoop()
+    def username_in_db(username, users):
         for index in range(len(users)):
             if username in users[index][0]:
                 return True
@@ -49,9 +55,9 @@ class SettingsValidator:
     def validate_password(password, hashed_password):
         return bcrypt.checkpw(base64.b64encode(bytes(password, 'utf-8')), bytes(hashed_password, 'utf-8'))
 
-    def validate_credentials(self, username_from_input, password_from_input, user_details_from_database):
-        if username_from_input == user_details_from_database[0] \
-                and self.validate_password(password_from_input, user_details_from_database[1]):
+    def validate_user_details(self, username, password, user_details):
+        if self.validate_username(username, user_details.get_username()) \
+                and self.validate_password(password, user_details.get_password()):
             return True
         return False
 
@@ -69,5 +75,10 @@ class SettingsValidator:
     def validate_database_entry(self, database_entry, user_details):
         if (user_details.get_username() == database_entry[0]) and \
                 (user_details.get_password() == bytes(database_entry[1], 'utf-8')):
+            return True
+        return False
+
+    def is_active_user(self, username, active_user):
+        if username == active_user:
             return True
         return False

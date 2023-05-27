@@ -5,6 +5,7 @@ import configparser
 import PySimpleGUI as sg
 from pathlib import Path
 from src.components.Utilities.mySQLUtilities import MySQLUtilities
+from src.components.Utilities.utilities import get_root_directory
 from src.components.settings.Models.Settings import Settings
 from src.components.settings.Models.User import User
 from mysql.connector import Error
@@ -31,6 +32,7 @@ class SettingsRepository:
         self.default_themes = None, None
         self.themes = None, None
 
+        self.default_dir = Path('src').resolve().parent.parent.as_posix()
         self.logger = logger
         self.sql = MySQLUtilities(host='127.0.0.1', username='test_user', password='test_pass763', database=None)
 
@@ -179,13 +181,16 @@ class SettingsRepository:
                 [System]
                 previous_theme = Null
                 current_theme = SystemDefault
+                prompt_line = {'{guest}|' + get_root_directory() + '$'}
 
                 [Files]
                 config.ini = {self.config_path}
                 save_folder = {self.default_save_folder}
                 user_details_path = {self.default_user_details_path}
+                current_dir = {self.default_dir}
                 
                 [Users]
+                active_user = Null
                 guest = Default
                 """
             self.load_updater(config_contents)
@@ -232,17 +237,23 @@ class SettingsRepository:
     def create_new_user_details(username, hashed_password):
         return User(username, hashed_password)
 
-    def establish_credential_variables(self, user_details):
+    def establish_credential_variables(self, user_details, set_active_user=False):
         self.read_config()
         username = user_details.get_username()
         current_users = self.updater.options('Users')
         # User details should be present already, last check in case wasn't written before
-        if username not in current_users:
+        if username.lower() not in current_users:
             self.updater['Users'][current_users[-1]].add_after.option(key=username, value='initialised')
-            self.updater.update_file()
-            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to settings.ini')
-        else:
-            self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} to config.ini')
+
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'User:{username} already present')
+
+        if set_active_user:
+            self.updater['Users']['active_user'] = username
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Added user:{username} as active user')
+
+        self.updater.update_file()
+
 
     def database_exists(self):
         try:
@@ -279,3 +290,26 @@ class SettingsRepository:
 
     def close_connection(self):
         self.sql.close_connection()
+
+    def get_active_user(self):
+        self.read_config()
+        return self.updater['Users']['active_user'].value
+
+    def get_current_dir(self):
+        self.read_config()
+        return self.updater['Files']['current_dir'].value
+
+    def get_prompt_line_variables(self):
+        self.read_config()
+        return self.get_active_user(), self.get_current_dir()
+
+    def set_prompt_line(self, new_prompt_line):
+        self.read_config()
+        self.updater['System']['prompt_line'] = new_prompt_line
+        self.updater.update_file()
+
+    def get_prompt_line(self):
+        self.read_config()
+        return self.updater['System']['prompt_line'].value
+
+

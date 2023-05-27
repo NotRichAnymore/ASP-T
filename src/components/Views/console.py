@@ -6,14 +6,14 @@ import PySimpleGUI as sg
 from src.components.Views import settingsWindow, mainWindow, systemTray
 from src.data.files.custom_themes import custom_themes
 from src.components.Utilities.loggingUtilities import LoggingUtilities
-from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
 
 
+@pysnooper.snoop()
 class Console:
 
     def __init__(self, command_controller, window_controller, settings_controller, logger):
-        self.prompt_line = '{guest}|' + get_root_directory() + '$'
+        self.prompt_line = None
         self.save_folder = None
         self.command_controller = command_controller
         self.window_controller = window_controller
@@ -40,7 +40,7 @@ class Console:
             self.logger.create_log_entry(level=logging.DEBUG, message=f'Adding Theme: {name}')
         self.logger.create_log_entry(level=logging.CRITICAL, message='Themes set')
 
-    @pysnooper.snoop()
+    
     def load_settings(self, default_path=False, path=None):
         self.logger.create_log_entry(level=logging.CRITICAL, message='Loading Settings')
         self.settings = self.settings_controller.load_settings(default_path, path)
@@ -58,7 +58,7 @@ class Console:
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting Current Theme')
         return self.theme
 
-    @pysnooper.snoop()
+    
     def establish_save_folder(self, save_folder=None):
         if save_folder:
             updated_settings = self.settings_controller.manage_save_folder(save_folder)
@@ -71,18 +71,16 @@ class Console:
 
         if username and password:
             self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
-            success, status = self.settings_controller.set_user_credentials(username, password)
-            if status == 'New User':
-                self.logger.create_log_entry(level=logging.CRITICAL,
-                                             message=f'User Details created: '
-                                                     f'{success if success is not None else False}')
-            elif status == 'Login User' and success:
+            success = self.settings_controller.manage_user_credentials(username, password)
+
+            self.logger.create_log_entry(level=logging.CRITICAL, message=f'User Details created: '
+                                                                         f'{success if success is not None else False}')
+            if success:
                 return username
 
-
     def establish_prompt_line(self, username):
-        if self.settings['Users'][username] == username:
-            self.prompt_line = f"{username}|{self.settings['Files']['current_dir']}$"
+        if self.settings_controller.manage_user_credentials(username, check_active_user=True):
+            self.prompt_line = self.settings_controller.manage_prompt_line()
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -113,9 +111,7 @@ class Console:
         # Set main window as the currently running window and gui is currently running
         self.update_active_window(None, 'main_window', True)
         self.logger.create_log_entry(level=logging.CRITICAL, message='Ending Program Setup')
-
-
-    @pysnooper.snoop()
+    
     def run_settings_window(self):
         settings = self.settings
         settings_window_ = settingsWindow.SettingsWindow()
@@ -161,10 +157,6 @@ class Console:
                     self.establish_save_folder(save_folder)
                     window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
-                elif event == f'create_user_button{self.suffix}':
-                    self.establish_user_variables(values[f'username_input{self.suffix}'],
-                                                  values[f'password_input{self.suffix}'])
-
                 elif event == f'login_user_button{self.suffix}':
                     username = self.establish_user_variables(values[f'username_input{self.suffix}'],
                                                              values[f'password_input{self.suffix}'])
@@ -174,7 +166,7 @@ class Console:
             window.close()
             del[window]
 
-    @pysnooper.snoop()
+    
     def run(self):
         # Setup Program
         self.program_setup()

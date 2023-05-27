@@ -10,6 +10,7 @@ class SettingsService:
         self.validator = validator
         self.object_loaded = None
         self.logger = logger
+        self.success = None
 
     def create_new_settings_obj(self, default_path):
         settings = self.repository.initialise_config_file(default_path)
@@ -71,38 +72,53 @@ class SettingsService:
             user_details = self.repository.create_new_user_details(username, hashed_password)
             self.logger.create_log_entry(level=logging.DEBUG, message=f'New user details object created')
             # Make a reference in the settings ini file
-            self.repository.establish_credential_variables(user_details)
+            self.repository.establish_credential_variables(user_details, set_active_user=True)
             # Save the username and encrypted password to the database
             last_entry = self.repository.save_user_details(user_details)
-            # check last entry corresponds to defined credentails
+            # check last entry corresponds to defined credentials
             success = self.validator.validate_database_entry(last_entry[0], user_details)
-            return success, 'New User'
-        # password fails to reference encrypted password (system error) inform the logger and exit method
-        self.logger.create_log_entry(level=logging.ERROR, message=f'Password does not match encrypted password')
+            # password fails to reference encrypted password (system error) inform the logger and exit method
+            if not success:
+                self.logger.create_log_entry(level=logging.ERROR, message='Unable to initialise user')
+
+            return success
+        else:
+            self.logger.create_log_entry(level=logging.ERROR, message='Password does not match encrypted password')
 
     def load_user(self, username, password):
         # User has been identified so query database for user details
         users = self.repository.get_all_users()
-        if self.validator.validate_username(username, users):
+        if self.validator.username_in_db(username, users):
             user_details = self.repository.get_user_details(username, password)
             if self.validator.validate_password(password, user_details.get_password()):
-                self.repository.establish_credential_variables(user_details)
-                return True if user_details.get_username() == username else False, 'Login User'
+                self.repository.establish_credential_variables(user_details, set_active_user=True)
+                return self.validator.validate_user_details(username, password, user_details)
 
-    def credential_handling(self, username, password):
-        if not self.repository.database_exists():
-            self.repository.intialise_database(username, password)
-            self.logger.create_log_entry(level=logging.CRITICAL, message='Initialising database')
-        #  Credentials should have pre-defined format standard
-        if self.validator.valid_credential_format(username, password):
-            # If user not found start user creation processes
-            if not self.repository.check_user_exists(username):
-                self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: False')
-                return self.initialise_user(username, password)
+    def credential_handling(self, username, password, check_active_user=False):
+        if username and check_active_user:
+            return self.validator.is_active_user(username, self.repository.get_active_user())
 
-            self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: True')
-            return self.load_user(username, password)
+        if username and password:
+            if not self.repository.database_exists():
+                self.repository.intialise_database(username, password)
+                self.logger.create_log_entry(level=logging.CRITICAL, message='Initialising database')
+            #  Credentials should have pre-defined format standard
+            if self.validator.valid_credential_format(username, password):
+                self.success = None
+                # If user not found start user creation processes
+                user_exists = self.repository.check_user_exists(username)
+                self.logger.create_log_entry(level=logging.DEBUG, message=f'Username: {username} found?: {user_exists}')
+                if not user_exists:
+                    self.success = self.initialise_user(username, password)
+                # if user has been initialised or the initialisation process has completed without error
+                elif user_exists or self.success:
+                    return self.load_user(username, password)
 
-        # If fail to match the format, inform the logger and exit method
-        self.logger.create_log_entry(level=logging.CRITICAL, message='Username or password is invalid')
+            # If fail to match the format, inform the logger and exit method
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Username or password is invalid')
+
+    def prompt_line_handling(self):
+        active_user, current_dir = self.repository.get_prompt_line_variables()
+        self.repository.set_prompt_line(f"{active_user}|{current_dir}$")
+        return self.repository.get_prompt_line()
 
