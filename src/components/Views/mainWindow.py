@@ -67,7 +67,8 @@ class MainWindow:
         layout = [
             [self.set_toolbar_layout()],
             [self.set_output_screen()],
-            [self.set_input_bar()]
+            [self.set_input_bar()],
+            [sg.Sizegrip()]
         ]
         return layout
 
@@ -75,7 +76,7 @@ class MainWindow:
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(1000, 700), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def create_new_window(self, window_num, new_theme=None):
+    def create_new_window(self, window_num, new_theme=None, size=None, keep_on_top=None):
         sg.theme(new_theme)
         suffix = '_' + window_num
         new_title = (self.get_title() + suffix)
@@ -92,9 +93,6 @@ class MainWindow:
                        key=f'main_window_maximise_button{suffix}'),
              sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
                        image_filename=Path(self.image_folder).joinpath('exit_icon.png').as_posix(),
-                       button_color='red', key=f'main_window_exit_button{suffix}'),
-             sg.Button(tooltip='Close Window', image_subsample=16, image_size=(16, 16),
-                       image_filename=Path(self.image_folder).joinpath('exit_icon.png').as_posix(),
                        button_color='red', key=f'main_window_exit_button{suffix}')
              ],
 
@@ -103,18 +101,22 @@ class MainWindow:
                                            reroute_stdout=True,
                                            font=('Commodore 64 Angled', '12'), key=f'output_screen{suffix}')],
 
-            [sg.Text(text=('{username}|' + get_root_directory() + '$'), justification='left',
+            [sg.Text(text=('{guest}|' + get_root_directory() + '$'), justification='left',
                      font=('Commodore 64 Angled', '10'), key=f'command_prompt{suffix}'),
              sg.Input(expand_x=True, font=('Commodore 64 Angled', '10'),
                       background_color=sg.theme_background_color(),
                       text_color=sg.theme_input_text_color(), do_not_clear=False,
                       key=f'command_arguments{suffix}'),
              sg.Button(visible=False, bind_return_key=True, key=f'load_input_button{suffix}')
-             ]
+             ],
+            [sg.Sizegrip()]
+
 
         ]
-        return sg.Window(title=new_title, layout=new_layout, size=(1000, 700), no_titlebar=True,
-                         grab_anywhere=True, keep_on_top=True, modal=True, finalize=True)
+        return sg.Window(title=new_title, layout=new_layout, size=(size if size is not None else (1000, 700)),
+                         no_titlebar=True, resizable=True, return_keyboard_events=True, grab_anywhere=True,
+                         keep_on_top=(keep_on_top if keep_on_top is not None else True), modal=True, finalize=True,
+                         use_default_focus=False)
 
     def run_window(self):
         return self.create_window()

@@ -267,11 +267,12 @@ class SettingsRepository:
         return self.sql.get_all_users()
 
     def get_user_details(self, username, password):
-        pass
+        user_details = self.sql.query_user_details(username, password)
+        return self.create_new_user_details(user_details[0][0], user_details[0][1])
 
     def check_user_exists(self, username=None):
         if username:
-            return True if username == self.sql.get_user_by_name(username) else False
+            return True if username in self.sql.get_user_by_name(username)[0] else False
 
         latest_user = self.updater.options('Users')[-1]
         return True if self.updater['Users'][latest_user].value in self.sql.get_last_entry() else False

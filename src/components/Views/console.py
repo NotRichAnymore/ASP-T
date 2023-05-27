@@ -3,15 +3,17 @@ import sys
 import traceback
 import pysnooper
 import PySimpleGUI as sg
-from src.components.Views import settingsWindow, mainWindow
+from src.components.Views import settingsWindow, mainWindow, systemTray
 from src.data.files.custom_themes import custom_themes
 from src.components.Utilities.loggingUtilities import LoggingUtilities
+from src.components.Utilities.utilities import get_root_directory
 from pathlib import Path
 
 
 class Console:
 
     def __init__(self, command_controller, window_controller, settings_controller, logger):
+        self.prompt_line = '{guest}|' + get_root_directory() + '$'
         self.save_folder = None
         self.command_controller = command_controller
         self.window_controller = window_controller
@@ -26,6 +28,9 @@ class Console:
         self.settings_window_num = 0
         self.preview_theme_window_num = 0
         self.help_window_num = 0
+        self.max_window_size = False
+        self.min_window_size = False
+        self.window_size = None
         self.logger = logger
 
     def initialise_themes(self):
@@ -63,10 +68,21 @@ class Console:
             self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
 
     def establish_user_variables(self, username, password):
-        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
-        success = self.settings_controller.set_user_credentials(username, password)
-        self.logger.create_log_entry(level=logging.CRITICAL,
-                                     message=f'User Details created: {success if success is not None else False}')
+
+        if username and password:
+            self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
+            success, status = self.settings_controller.set_user_credentials(username, password)
+            if status == 'New User':
+                self.logger.create_log_entry(level=logging.CRITICAL,
+                                             message=f'User Details created: '
+                                                     f'{success if success is not None else False}')
+            elif status == 'Login User' and success:
+                return username
+
+
+    def establish_prompt_line(self, username):
+        if self.settings['Users'][username] == username:
+            self.prompt_line = f"{username}|{self.settings['Files']['current_dir']}$"
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -145,11 +161,14 @@ class Console:
                     self.establish_save_folder(save_folder)
                     window[f'save_folder_input{self.suffix}'].update(self.save_folder)
 
-                elif event == f'set_user_button{self.suffix}':
-                    self.establish_user_variables(values[f'username_input{self.suffix}'], values[f'password_input{self.suffix}'])
+                elif event == f'create_user_button{self.suffix}':
+                    self.establish_user_variables(values[f'username_input{self.suffix}'],
+                                                  values[f'password_input{self.suffix}'])
 
-                elif event == f'load_user_button{self.suffix}':
-                    pass
+                elif event == f'login_user_button{self.suffix}':
+                    username = self.establish_user_variables(values[f'username_input{self.suffix}'],
+                                                             values[f'password_input{self.suffix}'])
+                    self.establish_prompt_line(username)
 
         except Exception as e:
             window.close()
@@ -162,11 +181,16 @@ class Console:
         reload_contents = False
         reload_window = False
 
+        # Load System Tray
+        # system_tray = systemTray.SystemTray()
+        # system_tray.create_system_tray_thread()
+
         # Setup Window variables
         main_window = mainWindow.MainWindow()
         sg.theme(self.establish_current_theme())
         window = main_window.create_new_window(window_num='0',
                                                new_theme=self.establish_current_theme())
+
         main_loop = True
         while main_loop:
             try:
@@ -183,6 +207,8 @@ class Console:
                     self.logger.create_log_entry(level=logging.ERROR, message='Closing Program')
                     break
 
+                window[f'command_prompt{self.suffix}'].update(self.prompt_line)
+                window.bind('<F7>', f'reset_window_size_button{self.suffix}')
                 run_event_loop = True
                 while run_event_loop:
                     if self.main_window_num > 0 and reload_contents:
@@ -191,6 +217,7 @@ class Console:
                         reload_contents = False
 
                     event, values = window.read()
+                    # print(event, values)
                     # If Exit button is pressed on the main menu
                     if event == f'main_window_exit_button{self.suffix}':
                         #  update the active window manager
@@ -208,12 +235,43 @@ class Console:
                         # save the console for reloading, run settings
                         # regardless of the output, reload console
                         if self.get_active_window() == 'settings_window':
-                            self.window_controller.save_console_output(self.settings, values[f'output_screen{self.suffix}'])
+                            self.window_controller.save_console_output(self.settings,
+                                                                       values[f'output_screen{self.suffix}'])
                             window.close()
                             self.run_settings_window()
                             reload_contents = True
                             reload_window = True
                             run_event_loop = False
+
+                    elif event == f'main_window_minimise_button{self.suffix}':
+                        pass
+
+
+                    #                          while True:
+                    #                             if self.min_window_size:
+                    #                                 window.normal()
+                    #                                 self.min_window_size = False
+                    #                                 break
+                    #                             window.minimize()
+                    #                             self.min_window_size = True
+                    #                             break
+
+                    elif event == f'main_window_maximise_button{self.suffix}':
+                        while True:
+                            if self.max_window_size:
+                                window.normal()
+                                self.max_window_size = False
+                                break
+                            window.maximize()
+                            self.max_window_size = True
+                            break
+
+                    elif event == f'reset_window_size_button{self.suffix}':
+                        self.window_controller.save_console_output(self.settings, values[f'output_screen{self.suffix}'])
+                        window.close()
+                        reload_contents = True
+                        reload_window = True
+                        run_event_loop = False
 
                     elif event == f'load_input_button{self.suffix}':
                         command_arguments = values[f'command_arguments{self.suffix}']
@@ -222,8 +280,6 @@ class Console:
 
                     if not run_event_loop:
                         break
-
-
 
             except Exception as e:
                 sg.popup_error(e.with_traceback(traceback.print_exc(file=sys.stdout)),

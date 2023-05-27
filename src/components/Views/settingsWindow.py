@@ -41,8 +41,9 @@ class SettingsWindow:
         self.password_text = sg.Text('Password: ')
         self.username_input = sg.Input(default_text='', expand_x=True, key='username_input_0')
         self.password_input = sg.Input(default_text='', expand_x=True, password_char='x', key='password_input_0')
-        self.user_details_button = sg.Button('Set User Details', expand_x=True, key='set_user_button_0')
-        self.load_user_details_button = sg.Button('Load User Details', expand_x=True, key='load_user_button_0')
+        self.user_details_button = sg.Button('Create User Details', expand_x=True, key='create_user_button_0')
+        self.load_user_details_button = sg.Button('Login with User Details', expand_x=True, key='login_user_button_0')
+
 
     def get_preview_themes_window_layout(self, suffix, new_theme=None):
         sg.theme(new_theme)
@@ -183,7 +184,8 @@ class SettingsWindow:
     def build_layout(self):
         layout = [
             [self.set_toolbar_layout()],
-            [self.build_tab_group()]
+            [self.build_tab_group()],
+            [sg.Sizegrip()]
         ]
         return layout
 
@@ -230,8 +232,8 @@ class SettingsWindow:
             [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
             [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, password_char='X',
                                              key=f'password_input{suffix}')],
-            [sg.Button('Set User Details', expand_x=True, key=f'set_user_button{suffix}'),
-             sg.Button('Load User Details', expand_x=True, key=f'load_user_button{suffix}')]
+            [sg.Button('Create User Details', expand_x=True, key=f'create_user_button{suffix}'),
+             sg.Button('Login with User Details', expand_x=True, key=f'login_user_button{suffix}')]
         ]
         new_database_tab = sg.Tab('Database', layout=new_database_tab_layout, key=f'database_tab{suffix}'
                                   )
@@ -240,11 +242,12 @@ class SettingsWindow:
 
         new_layout = [
             [new_title_layout],
-            [new_tab_group]
+            [new_tab_group],
+            [sg.Sizegrip()]
         ]
 
         return sg.Window(title=new_title, layout=new_layout, size=(535, 500), no_titlebar=True,
-                         grab_anywhere=True, keep_on_top=True, modal=True)
+                         grab_anywhere=True, keep_on_top=True, modal=True, resizable=True)
 
     def run_window(self):
         return self.create_window()

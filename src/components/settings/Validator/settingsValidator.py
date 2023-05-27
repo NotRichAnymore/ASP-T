@@ -38,12 +38,16 @@ class SettingsValidator:
         return False
 
     @staticmethod
+    @pysnooper.snoop()
     def validate_username(username, users):
-        return True if username in users else False
+        for index in range(len(users)):
+            if username in users[index][0]:
+                return True
+        return False
 
     @staticmethod
     def validate_password(password, hashed_password):
-        return bcrypt.checkpw(base64.b64encode(bytes(password, 'utf-8')), hashed_password)
+        return bcrypt.checkpw(base64.b64encode(bytes(password, 'utf-8')), bytes(hashed_password, 'utf-8'))
 
     def validate_credentials(self, username_from_input, password_from_input, user_details_from_database):
         if username_from_input == user_details_from_database[0] \
@@ -61,7 +65,6 @@ class SettingsValidator:
             self.logger.create_log_entry(level=logging.CRITICAL, message='Username and Password format is valid')
             return True
         return False
-
 
     def validate_database_entry(self, database_entry, user_details):
         if (user_details.get_username() == database_entry[0]) and \

@@ -152,7 +152,18 @@ class MySQLUtilities:
             MySQLUtilities.connection.commit()
         except Error as e:
             return e
-        
+
+    def query_user_details(self, username, password):
+        try:
+            query = """
+            SELECT username, hashed_password FROM aspt.users
+            WHERE users.username =  %(users.username)s;
+            """
+            cursor = MySQLUtilities.connection.cursor()
+            cursor.execute(query, {'users.username': username})
+            return cursor.fetchall()
+        except Error as e:
+            return e
 
     def get_user_by_name(self, username):
         try:
