@@ -15,7 +15,7 @@ class MainWindow:
                                          image_filename=Path(image_folder).joinpath('settings_icon.png').as_posix(),
                                          pad=((660, 0), (0, 0)), key='main_window_settings_button_0')
 
-        self.minimise_button = sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
+        self.minimise_button = sg.Button(tooltip='Reset Window', image_subsample=16, image_size=(16, 16),
                                          image_filename=Path(image_folder).joinpath('minimise_icon.png').as_posix(),
                                          key='main_window_minimise_button_0')
 
@@ -85,7 +85,7 @@ class MainWindow:
              sg.Button(tooltip='Settings', image_subsample=3, image_size=(16, 16),
                        image_filename=Path(self.image_folder).joinpath('settings_icon.png').as_posix(),
                        pad=((660, 0), (0, 0)), key=f'main_window_settings_button{suffix}'),
-             sg.Button(tooltip='Minimise Window', image_subsample=16, image_size=(16, 16),
+             sg.Button(tooltip='Reset Window', image_subsample=16, image_size=(16, 16),
                        image_filename=Path(self.image_folder).joinpath('minimise_icon.png').as_posix(),
                        key=f'main_window_minimise_button{suffix}'),
              sg.Button(tooltip='Maximise Window', image_subsample=16, image_size=(16, 16),

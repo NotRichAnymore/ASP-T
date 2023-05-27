@@ -111,14 +111,25 @@ class SettingsService:
                 if not user_exists:
                     self.success = self.initialise_user(username, password)
                 # if user has been initialised or the initialisation process has completed without error
-                elif user_exists or self.success:
+                elif user_exists or self.success is True:
                     return self.load_user(username, password)
 
             # If fail to match the format, inform the logger and exit method
-            self.logger.create_log_entry(level=logging.CRITICAL, message='Username or password is invalid')
+            if not self.success:
+                self.logger.create_log_entry(level=logging.CRITICAL, message='Username or password is invalid')
 
-    def prompt_line_handling(self):
+    def prompt_line_from_settings(self):
         active_user, current_dir = self.repository.get_prompt_line_variables()
         self.repository.set_prompt_line(f"{active_user}|{current_dir}$")
         return self.repository.get_prompt_line()
+
+    def defined_prompt_line(self, prompt_line):
+        self.repository.set_prompt_line(prompt_line)
+        return self.repository.get_prompt_line()
+
+    def prompt_line_handling(self, prompt_line=None):
+        if not prompt_line:
+            return self.prompt_line_from_settings()
+        return self.defined_prompt_line(prompt_line)
+
 

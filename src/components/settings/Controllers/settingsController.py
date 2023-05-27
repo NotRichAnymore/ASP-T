@@ -29,8 +29,8 @@ class SettingsController:
     def manage_user_credentials(self, username, password=None, check_active_user=None):
         return self.service.credential_handling(username, password, check_active_user)
 
-    def manage_prompt_line(self):
-        return self.service.prompt_line_handling()
+    def manage_prompt_line(self, prompt_line=None):
+        return self.service.prompt_line_handling(prompt_line)
 
 
 

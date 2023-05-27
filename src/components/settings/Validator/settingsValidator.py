@@ -52,8 +52,13 @@ class SettingsValidator:
         return False
 
     @staticmethod
+    @pysnooper.snoop()
     def validate_password(password, hashed_password):
-        return bcrypt.checkpw(base64.b64encode(bytes(password, 'utf-8')), bytes(hashed_password, 'utf-8'))
+        if not isinstance(password, bytes) :
+            password = base64.b64encode(bytes(password, 'utf-8'))
+        if not isinstance(hashed_password, bytes):
+            hashed_password = bytes(hashed_password, 'utf-8')
+        return bcrypt.checkpw(password, hashed_password)
 
     def validate_user_details(self, username, password, user_details):
         if self.validate_username(username, user_details.get_username()) \

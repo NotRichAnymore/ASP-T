@@ -78,9 +78,22 @@ class Console:
             if success:
                 return username
 
-    def establish_prompt_line(self, username):
-        if self.settings_controller.manage_user_credentials(username, check_active_user=True):
-            self.prompt_line = self.settings_controller.manage_prompt_line()
+    def establish_prompt_line(self, username=None, prompt_line=None):
+        # Change the prompt line if either param is present
+        if username or prompt_line:
+            # if changing the prompt line based on username
+            if username is not None:
+                # ensure that username is the active user
+                if not self.settings_controller.manage_user_credentials(username, check_active_user=True):
+                    # otherwise raise exception
+                    return False
+            # in case of username, prompt_line is none so settings is checked for the prompt line
+            # (changed after user has been loaded)
+            # in case of defined prompt line, prior check has been passed (program startup) and defined prompt line used
+            self.prompt_line = self.settings_controller.manage_prompt_line(prompt_line)
+
+        self.logger.create_log_entry(level=logging.CRITICAL, message='Getting prompt line')
+        return self.prompt_line
 
     def execute_command(self, command_arguments):
         command = self.command_controller.load_command(command_arguments)
@@ -95,6 +108,11 @@ class Console:
         self.logger.create_log_entry(level=logging.CRITICAL, message='Updating active window')
         self.window_controller.update_active_window_(window_to_close, active_window, program_running)
 
+    def reset_window_size(self, window, values):
+        self.window_controller.save_console_output(self.settings, values[f'output_screen{self.suffix}'])
+        window.close()
+        return True, True, False
+
     @staticmethod
     def end_program(main_window):
         main_window.close()
@@ -108,6 +126,8 @@ class Console:
         settings = self.settings
         current_theme_from_file = settings['System']['current_theme']
         self.establish_current_theme(current_theme_from_file)
+        current_prompt_line = settings['System']['prompt_line']
+        self.establish_prompt_line(prompt_line=current_prompt_line)
         # Set main window as the currently running window and gui is currently running
         self.update_active_window(None, 'main_window', True)
         self.logger.create_log_entry(level=logging.CRITICAL, message='Ending Program Setup')
@@ -199,7 +219,7 @@ class Console:
                     self.logger.create_log_entry(level=logging.ERROR, message='Closing Program')
                     break
 
-                window[f'command_prompt{self.suffix}'].update(self.prompt_line)
+                window[f'command_prompt{self.suffix}'].update(self.establish_prompt_line())
                 window.bind('<F7>', f'reset_window_size_button{self.suffix}')
                 run_event_loop = True
                 while run_event_loop:
@@ -236,17 +256,7 @@ class Console:
                             run_event_loop = False
 
                     elif event == f'main_window_minimise_button{self.suffix}':
-                        pass
-
-
-                    #                          while True:
-                    #                             if self.min_window_size:
-                    #                                 window.normal()
-                    #                                 self.min_window_size = False
-                    #                                 break
-                    #                             window.minimize()
-                    #                             self.min_window_size = True
-                    #                             break
+                        reload_contents, reload_window, run_event_loop = self.reset_window_size(window, values)
 
                     elif event == f'main_window_maximise_button{self.suffix}':
                         while True:
@@ -259,11 +269,7 @@ class Console:
                             break
 
                     elif event == f'reset_window_size_button{self.suffix}':
-                        self.window_controller.save_console_output(self.settings, values[f'output_screen{self.suffix}'])
-                        window.close()
-                        reload_contents = True
-                        reload_window = True
-                        run_event_loop = False
+                        reload_contents, reload_window, run_event_loop = self.reset_window_size(window, values)
 
                     elif event == f'load_input_button{self.suffix}':
                         command_arguments = values[f'command_arguments{self.suffix}']

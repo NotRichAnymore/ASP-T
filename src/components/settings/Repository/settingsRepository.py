@@ -283,7 +283,10 @@ class SettingsRepository:
 
     def check_user_exists(self, username=None):
         if username:
-            return True if username in self.sql.get_user_by_name(username)[0] else False
+            try:
+                return True if username in self.sql.get_user_by_name(username)[0] else False
+            except IndexError:
+                return False
 
         latest_user = self.updater.options('Users')[-1]
         return True if self.updater['Users'][latest_user].value in self.sql.get_last_entry() else False
