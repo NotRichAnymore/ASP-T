@@ -96,9 +96,9 @@ class Console:
         return self.prompt_line
 
     def execute_command(self, command_arguments):
-        command = self.command_controller.load_command(command_arguments)
+        self.command_controller.load_command(command_arguments)
         # (command)
-        return self.command_controller.run_command(command)
+        return self.command_controller.run_command()
 
     def get_active_window(self):
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting active window')

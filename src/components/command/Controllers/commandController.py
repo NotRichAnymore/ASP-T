@@ -7,10 +7,10 @@ class CommandController:
         self.service = service
 
     def load_command(self, command_arguments):
-        return self.service.parse(command_arguments)
+        self.service.parse(command_arguments)
 
-    def run_command(self, command):
-        return self.service.run_command(command)
+    def run_command(self):
+        return self.service.run_command()
 
 
 
