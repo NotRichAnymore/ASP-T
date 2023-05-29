@@ -96,9 +96,7 @@ class Console:
         return self.prompt_line
 
     def execute_command(self, command_arguments):
-        self.command_controller.load_command(command_arguments)
-        # (command)
-        return self.command_controller.run_command()
+        return self.command_controller.execute_command(command_arguments)
 
     def get_active_window(self):
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting active window')
@@ -274,7 +272,13 @@ class Console:
                     elif event == f'load_input_button{self.suffix}':
                         command_arguments = values[f'command_arguments{self.suffix}']
                         print(command_arguments)
-                        print(self.execute_command(command_arguments))
+                        response = self.execute_command(command_arguments)
+                        if response is None:
+                            continue
+                        if response == 'clear':
+                            window[f'output_screen{self.suffix}'].update(' ')
+                        print(response)
+                        print('\n')
 
                     if not run_event_loop:
                         break
