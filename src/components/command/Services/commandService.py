@@ -14,19 +14,6 @@ class CommandService:
         self.command = []
         self.command_format = None
 
-
-    def get_by_path(self, path):
-        return self.repository.get_by_path(path)
-
-    def get_all_paths(self):
-        return self.repository.get_all()
-
-    def add_command_argument(self, argument):
-        self.command_arguments.append(argument)
-
-    def add_command_option(self, option):
-        self.command_options.append(option)
-
     def establish_command_format(self, command):
         return self.repository.get_command_format(command)
 
@@ -42,12 +29,13 @@ class CommandService:
                 return None
             case 'date':
                 arguments = []
+                if len(tokens) == 0:
+                    return None
                 for token in tokens:
-                    if token in self.repository.get__all_datetime_formats() and \
+                    if token in self.repository.get_all_datetime_formats() and \
                             self.validator.validate_date_format(token):
                         arguments.append(token)
                     return arguments
-
 
     @staticmethod
     def determine_command_options(command, opt_format, tokens):
@@ -60,6 +48,8 @@ class CommandService:
             case 'history':
                 return None
             case 'date':
+                if len(tokens) == 0:
+                    return None
                 for token in tokens:
                     if token in opt_format:
                         options.append(token)
@@ -70,6 +60,12 @@ class CommandService:
         match self.command_name:
             case 'help':
                 if len(tokens) != 2:
+                    raise InvalidCommandFormatError(self.command_name, command_format)
+            case 'clear':
+                if len(tokens) != 1:
+                    raise InvalidCommandFormatError(self.command_name, command_format)
+            case 'history':
+                if len(tokens) != 1:
                     raise InvalidCommandFormatError(self.command_name, command_format)
 
         self.command_args = self.determine_command_arguments(self.command_name, command_format[1], tokens[1:])
@@ -82,21 +78,12 @@ class CommandService:
         self.command_format = self.establish_command_format(tokens[0])
         self.determine_command(tokens, self.command_format)
 
-
-    def help_command(self):
-        jsonObject = self.repository.get_all_help_command_details()
-        for index in range(len(jsonObject)):
-            help_command_details = jsonObject[index]
-            if self.command_args == help_command_details['name'] and self.command_opts is None:
-                response = f"Command Name: {help_command_details['name']}\n" \
-                           f"Arguments: {help_command_details['arguments']}\n" \
-                           f"Options: {help_command_details['options']}\n" \
-                           f"Description: {help_command_details['description']}"
-                return response
-
-    def clear_command(self):
-        return self.command_name
-
+    def remove_none_values(self):
+        command = []
+        for ele in self.command:
+            if (isinstance(ele, str) and ele is not None) or (isinstance(ele, list) and len(ele) > 0):
+                command.append(ele)
+        self.command = command
 
     def run_command(self):
         match self.command_name:
@@ -104,6 +91,46 @@ class CommandService:
                 return self.help_command()
             case 'clear':
                 return self.clear_command()
+            case 'history':
+                return self.history_command()
+            case 'date':
+                self.remove_none_values()
+                return self.date_command()
+
+    def help_command(self):
+        jsonObject = self.repository.get_all_help_command_details()
+        jsonObj = self.repository.get_all_command_details()
+        for index in range(len(jsonObject)):
+            help_command_details = jsonObject[index]
+            command_details = jsonObj[index]
+            if self.command_args == help_command_details['name'] and self.command_args in command_details['name']\
+                    and self.command_opts is None:
+                response = f"Command Name: {help_command_details['name']}\n" \
+                           f"Description: {help_command_details['description']}\n"\
+                           f"Arguments: {command_details['arguments']}\n"\
+                           f"Options: {command_details['options']}\n" \
+                           f"Description: {help_command_details['options']}\n"
+
+                return response
+
+    def clear_command(self):
+        return self.command_name
+
+    def history_command(self):
+        pass
+
+    def date_command(self):
+        if len(self.command) == 1:
+            return self.repository.get_current_datetime()
+        for opt in self.command_opts:
+            if opt == '-u':
+                if len(self.command) == 2:
+                    return self.repository.get_global_datetimes()
+                elif len(self.command) == 3 and self.datetime_format:
+                    return self.repository.get_global_datetimes(self.datetime_format)
+
+
+
 
     def command_order(self):
         pass

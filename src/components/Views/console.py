@@ -98,6 +98,10 @@ class Console:
     def execute_command(self, command_arguments):
         return self.command_controller.execute_command(command_arguments)
 
+    def log_command(self, response):
+        #  return self.command_controller.save_command_response(response)
+        pass
+
     def get_active_window(self):
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting active window')
         return self.window_controller.get_active_window()
@@ -273,10 +277,15 @@ class Console:
                         command_arguments = values[f'command_arguments{self.suffix}']
                         print(command_arguments)
                         response = self.execute_command(command_arguments)
+                        # self.log_command(response)
                         if response is None:
                             continue
-                        if response == 'clear':
+                        elif response == 'clear':
                             window[f'output_screen{self.suffix}'].update(' ')
+                        elif isinstance(response, list):
+                            for line in response:
+                                print(line)
+                            continue
                         print(response)
                         print('\n')
 

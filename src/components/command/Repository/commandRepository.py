@@ -1,5 +1,7 @@
+import datetime
 import json
 import pysnooper
+import pytz
 from pathlib import Path
 from src.components.command.Models.Commands.commands import Command
 from src.components.Utilities.sqliteUtilities import SqliteUtilities
@@ -27,6 +29,9 @@ class CommandRepository:
             jsonObj = json.load(file)
             return jsonObj
 
+    def get_all_command_details(self):
+        return self.read_command_details()
+
     def get_all_commands(self):
         commands = []
         jsonObject = self.read_command_details()
@@ -50,8 +55,27 @@ class CommandRepository:
         datetime_formats = []
         jsonObject = self.read_datetime_formats()
         for index in range(len(jsonObject)):
-            datetime_formats.append(jsonObject[index]['Date'])
+            datetime_formats.append(jsonObject[index]['Data'])
         return datetime_formats
+
+    def get_current_time(self):
+        return datetime.datetime.now().time()
+
+    def get_current_date(self):
+        return datetime.datetime.now().date()
+
+    def get_current_datetime(self):
+        return datetime.datetime.now()
+
+    @staticmethod
+    def get_global_datetimes(fmt=None):
+        global_datetimes = []
+        for timezone in pytz.common_timezones:
+            dt = datetime.datetime.now().astimezone(pytz.timezone(timezone))
+            if fmt:
+                dt = dt.strftime(fmt)
+            global_datetimes.append(f'[{pytz.timezone(timezone).zone}]|[{dt}]')
+        return global_datetimes
 
     def read_help_command_details(self):
         with open(self.help_command_details_path, 'r') as file:

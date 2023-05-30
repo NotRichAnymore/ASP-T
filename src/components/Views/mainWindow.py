@@ -99,7 +99,7 @@ class MainWindow:
             [sg.Multiline(expand_x=True, expand_y=True, autoscroll=True, write_only=False,
                                            #reroute_stderr=True,
                                            reroute_stdout=True,
-                                           font=('Commodore 64 Angled', '12'), key=f'output_screen{suffix}')],
+                                           font=('Commodore 64 Angled', '9'), key=f'output_screen{suffix}')],
 
             [sg.Text(text=('{guest}|' + get_root_directory() + '$'), justification='left',
                      font=('Commodore 64 Angled', '10'), key=f'command_prompt{suffix}'),

@@ -1,5 +1,4 @@
 
-
 matrix_theme = {'BACKGROUND': '#006400',  # dark green #006400
                 'TEXT': '#FFF4C9',
                 'INPUT': '#030303',
@@ -33,4 +32,18 @@ steampunk_theme = {'BACKGROUND': '#838B8B',  # azure4 #838B8B
                    'SLIDER_DEPTH': 0,
                    'PROGRESS_DEPTH': 0}
 
-custom_themes = {'Matrix': matrix_theme, 'Cyberpunk': cyberpunk_theme, 'Steampunk': steampunk_theme}
+aspt_theme = {'BACKGROUND': '#483D8B',  # darkslateblue	#483D8B
+              'TEXT': '#EEE5DE',  # seashell2 #EEE5DE
+              'INPUT': '#FFE7BA',  # wheat1	#FFE7BA
+              'TEXT_INPUT': '#DC143C',  # lightcoral #F08080
+              'SCROLL': '##1874CD',  # burlywood1 #FFD39B
+              'BUTTON': ('#EEE5DE', '#FFB90F'),  # seashell2 #EEE5DE # darkgoldenrod1 #FFB90F
+              'PROGRESS': ('#8B4500', '#EEE5DE'),  # darkorange4 #8B4500 # seashell2 #EEE5DE
+              'BORDER': 1,
+              'SLIDER_DEPTH': 0,
+              'PROGRESS_DEPTH': 0}
+
+custom_themes = {'Matrix': matrix_theme,
+                 'Cyberpunk': cyberpunk_theme,
+                 'Steampunk': steampunk_theme,
+                 'ASP-T': aspt_theme}
