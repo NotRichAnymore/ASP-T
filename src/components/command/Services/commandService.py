@@ -1,3 +1,5 @@
+import re
+
 from src.components.command.exceptions import InvalidCommandFormatError
 import string
 import pysnooper
@@ -13,6 +15,7 @@ class CommandService:
         self.command_opts = []
         self.command = []
         self.command_format = None
+        self.datetime_format = None
 
     def establish_command_format(self, command):
         return self.repository.get_command_format(command)
@@ -28,16 +31,10 @@ class CommandService:
             case 'history':
                 return None
             case 'date':
-                arguments = []
-                if len(tokens) == 0:
-                    return None
-                for token in tokens:
-                    if token in self.repository.get_all_datetime_formats() and \
-                            self.validator.validate_date_format(token):
-                        arguments.append(token)
-                    return arguments
+                return None
 
     @staticmethod
+    @pysnooper.snoop()
     def determine_command_options(command, opt_format, tokens):
         options = []
         match command:
@@ -55,7 +52,7 @@ class CommandService:
                         options.append(token)
                 return options
 
-    def determine_command(self, tokens, command_format):
+    def determine_command(self, tokens: list, command_format):
         self.command_name = command_format[0]
         match self.command_name:
             case 'help':
@@ -67,6 +64,14 @@ class CommandService:
             case 'history':
                 if len(tokens) != 1:
                     raise InvalidCommandFormatError(self.command_name, command_format)
+            case 'date':
+                for token in tokens:
+                    if token.startswith('--format='):
+                        self.datetime_format = re.sub('--format=', '', token)
+                        format_opt = re.sub(self.datetime_format, '', token)
+                        format_index = tokens.index(token)
+                        tokens.remove(token)
+                        tokens.insert(format_index, format_opt)
 
         self.command_args = self.determine_command_arguments(self.command_name, command_format[1], tokens[1:])
         self.command_opts = self.determine_command_options(self.command_name, command_format[2], tokens[1:])
@@ -122,11 +127,11 @@ class CommandService:
     def date_command(self):
         if len(self.command) == 1:
             return self.repository.get_current_datetime()
-        for opt in self.command_opts:
-            if opt == '-u':
-                if len(self.command) == 2:
+        if '-u' in self.command_opts:
+            match self.command_opts:
+                case '-u':
                     return self.repository.get_global_datetimes()
-                elif len(self.command) == 3 and self.datetime_format:
+                case ['-u', '--format=']:
                     return self.repository.get_global_datetimes(self.datetime_format)
 
 
