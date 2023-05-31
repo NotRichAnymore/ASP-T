@@ -64,7 +64,9 @@ class CommandRepository:
     def get_current_date(self):
         return datetime.datetime.now().date()
 
-    def get_current_datetime(self):
+    def get_current_datetime(self, fmt=None):
+        if fmt:
+            return datetime.datetime.now().strftime(fmt)
         return datetime.datetime.now()
 
     @staticmethod
