@@ -1,6 +1,6 @@
 import datetime
 import pysnooper
-
+from src.components.command.exceptions import InvalidCommandFormatError
 
 @pysnooper.snoop()
 class CommandValidator:
@@ -9,9 +9,10 @@ class CommandValidator:
 
     def validate_date_format(self, fmt: str):
         try:
-            if fmt is not None and isinstance(fmt, str):
-                self.current_datetime.strftime(fmt)
-                return True
+            if not fmt:
+                raise InvalidCommandFormatError(self.command_name, self.command_format)
+            self.current_datetime.strftime(fmt)
+            return True
         except Exception:
             return False
 

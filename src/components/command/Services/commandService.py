@@ -127,16 +127,19 @@ class CommandService:
     def date_command(self):
         if len(self.command) == 1:
             return self.repository.get_current_datetime()
+
         if '-u' in self.command_opts:
             match self.command_opts:
                 case '-u':
                     return self.repository.get_global_datetimes()
                 case ['-u', '--format=']:
-                    return self.repository.get_global_datetimes(self.datetime_format)
+                    if self.validator.validate_date_format(self.datetime_format):
+                        return self.repository.get_global_datetimes(self.datetime_format)
+
         if '--format=' in self.command_opts and self.validator.validate_date_format(self.datetime_format):
-            if not self.datetime_format:
-                raise InvalidCommandFormatError(self.command_name, self.command_format)
             return self.repository.get_current_datetime(self.datetime_format)
+
+        return InvalidCommandFormatError(self.command_name, self.command_format)
 
 
 
