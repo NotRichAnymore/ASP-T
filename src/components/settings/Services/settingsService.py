@@ -1,5 +1,7 @@
 import logging
 import pysnooper
+import pytz
+
 from src.components.Utilities.utilities import hash_password
 
 
@@ -56,10 +58,19 @@ class SettingsService:
 
     def establish_save_folder(self, new_save_folder):
         save_folder = self.repository.get_save_folder()
-        if self.repository.validate.save_folder(new_save_folder, save_folder):
+        if self.validator.validate_save_folder(new_save_folder, save_folder):
             self.repository.change_save_folder(new_save_folder)
             return self.repository.create_existing_settings()
 
+    def establish_timezone(self, new_timezone):
+        if new_timezone:
+            old_timezone = self.repository.get_timezone()
+            if isinstance(new_timezone, str):
+                new_timezone = pytz.timezone(new_timezone)
+            if self.validator.validate_timezones(old_timezone, new_timezone):
+                self.repository.change_timezone(new_timezone)
+            return self.repository.create_existing_settings()
+        return self.repository.get_timezone()
 
     def initialise_user(self, username, password):
         #  Create encrypted password, which is a reference to actual password

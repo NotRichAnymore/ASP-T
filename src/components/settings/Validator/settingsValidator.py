@@ -37,6 +37,9 @@ class SettingsValidator:
         self.logger.create_log_entry(level=logging.DEBUG, message=f'New save folder {new_save_folder} not valid')
         return False
 
+    def validate_timezones(self, old_timezone, new_timezone):
+        return True if old_timezone.zone != new_timezone.zone else False
+
     @staticmethod
     @pysnooper.snoop()
     def validate_username(expected, actual):

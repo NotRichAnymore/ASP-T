@@ -26,6 +26,9 @@ class SettingsController:
     def manage_save_folder(self, save_folder):
         return self.service.establish_save_folder(save_folder)
 
+    def manage_timezone(self, timezone=None):
+        return self.service.establish_timezone(timezone)
+
     def manage_user_credentials(self, username, password=None, check_active_user=None):
         return self.service.credential_handling(username, password, check_active_user)
 

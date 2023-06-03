@@ -1,5 +1,5 @@
 import logging
-
+import pytz
 import configupdater
 import configparser
 import PySimpleGUI as sg
@@ -8,7 +8,6 @@ from src.components.Utilities.mySQLUtilities import MySQLUtilities
 from src.components.Utilities.utilities import get_root_directory
 from src.components.settings.Models.Settings import Settings
 from src.components.settings.Models.User import User
-from mysql.connector import Error
 import pysnooper
 
 
@@ -31,6 +30,8 @@ class SettingsRepository:
 
         self.default_themes = None, None
         self.themes = None, None
+
+        self.timezone = None
 
         self.default_dir = Path('src').resolve().parent.parent.as_posix()
         self.logger = logger
@@ -61,6 +62,9 @@ class SettingsRepository:
         self.read_config()
         return sg.UserSettings(filename=path, use_config_file=True, convert_bools_and_none=True)
 
+    def get_timezone(self):
+        return pytz.timezone(self.updater['System']['timezone'].value)
+
     def set_inital_config_path(self, path):
         self.logger.create_log_entry(level=logging.DEBUG,
                                      message=f'Setting initial config path as {path}')
@@ -83,6 +87,7 @@ class SettingsRepository:
         self.read_config()
         self.updater['Files']['save_folder'] = folder
         self.save_folder = self.updater['Files']['save_folder']
+
 
     def set_user_details_path(self, path):
         self.logger.create_log_entry(
@@ -136,6 +141,16 @@ class SettingsRepository:
         self.set_save_folder(save_folder)
         self.logger.create_log_entry(level=logging.INFO, message='Save folder changed')
 
+    def change_timezone(self, new_timezone):
+        self.read_config()
+        self.logger.create_log_entry(
+            level=logging.INFO,
+            message=f"Changing timezone from {self.updater['System']['timezone']} to {new_timezone}")
+        self.updater['System']['timezone'] = new_timezone
+        self.timezone = new_timezone
+        self.write_to_config()
+        self.logger.create_log_entry(level=logging.INFO, message='Timezone changed')
+
     def create_existing_settings(self):
         self.read_config()
         self.logger.create_log_entry(level=logging.INFO, message=f'Creating existing settings from {self.config_path}')
@@ -182,6 +197,8 @@ class SettingsRepository:
                 previous_theme = Null
                 current_theme = SystemDefault
                 prompt_line = {'{guest}|' + get_root_directory() + '$'}
+                timezone = {pytz.UTC}
+                datetime_format = Null
 
                 [Files]
                 config.ini = {self.config_path}

@@ -139,6 +139,9 @@ class CommandService:
         if '--format=' in self.command_opts and self.validator.validate_date_format(self.datetime_format):
             return self.repository.get_current_datetime(self.datetime_format)
 
+        if '-s' or '--Set' in self.command_opts:
+            pass
+
         return InvalidCommandFormatError(self.command_name, self.command_format)
 
 

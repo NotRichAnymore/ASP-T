@@ -3,6 +3,8 @@ import sys
 import traceback
 import pysnooper
 import PySimpleGUI as sg
+import pytz
+
 from src.components.Views import settingsWindow, mainWindow, systemTray
 from src.data.files.custom_themes import custom_themes
 from src.components.Utilities.loggingUtilities import LoggingUtilities
@@ -28,6 +30,7 @@ class Console:
         self.settings_window_num = 0
         self.preview_theme_window_num = 0
         self.help_window_num = 0
+        self.preview_timezone_window_num = 0
         self.max_window_size = False
         self.min_window_size = False
         self.window_size = None
@@ -66,6 +69,17 @@ class Console:
             self.save_folder = updated_settings['Files']['save_folder']
             self.settings = updated_settings
             self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
+
+    def establish_timezone(self, timezone=None):
+        if timezone:
+            updated_settings = self.settings_controller.manage_timezone(timezone)
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Timezone Updated')
+            self.save_folder = updated_settings['Files']['timezone']
+            self.settings = updated_settings
+            self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
+
+        return self.settings_controller.manage_timezone()
+
 
     def establish_user_variables(self, username, password):
 
@@ -128,6 +142,8 @@ class Console:
         settings = self.settings
         current_theme_from_file = settings['System']['current_theme']
         self.establish_current_theme(current_theme_from_file)
+        current_timezone = pytz.timezone(settings['System']['timezone'])
+        self.establish_timezone(current_timezone)
         current_prompt_line = settings['System']['prompt_line']
         self.establish_prompt_line(prompt_line=current_prompt_line)
         # Set main window as the currently running window and gui is currently running
@@ -137,7 +153,8 @@ class Console:
     def run_settings_window(self):
         settings = self.settings
         settings_window_ = settingsWindow.SettingsWindow()
-        window = settings_window_.create_new_window(window_num=str(self.settings_window_num))
+        window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
+                                                    timezone=self.establish_timezone())
         # Until the settings window isn't the active window
         active_window = self.get_active_window()
         try:
@@ -161,6 +178,17 @@ class Console:
                     updated_theme = settings_window_.run_preview_themes_window(self.preview_theme_window_num,
                                                                                self.establish_current_theme())
                     self.establish_current_theme(updated_theme)
+                    self.settings_window_num += 1
+                    window.close()
+                    window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
+                                                                new_theme=self.establish_current_theme())
+
+                elif event == f'change_timezone_button{self.suffix}':
+                    new_timezone = settings_window_.run_preview_timezones_window(window_num=
+                                                                                 self.preview_timezone_window_num,
+                                                                                 current_timezone=
+                                                                                 self.establish_timezone())
+                    self.establish_timezone(new_timezone)
                     self.settings_window_num += 1
                     window.close()
                     window = settings_window_.create_new_window(window_num=str(self.settings_window_num),

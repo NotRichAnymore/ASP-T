@@ -1,5 +1,8 @@
 import PySimpleGUI as sg
 from pathlib import Path
+
+import pytz
+
 from src.data.files.settings_help import files_tab, system_tab, database_tab
 import pysnooper
 
@@ -9,6 +12,7 @@ class SettingsWindow:
     def __init__(self):
 
         self.preview_themes_suffix = None
+        self.preview_timezones_suffix = None
         image_folder = Path('src').resolve().parent.parent.joinpath('data/images').as_posix()
         self.image_folder = image_folder
         self.title_text = sg.Text(text='ASP-T CMD Prompt: Settings', font=('Commodore 64 Angled', '12'),
@@ -31,6 +35,9 @@ class SettingsWindow:
 
         self.theme_text = sg.Text(f'Theme: {sg.theme()}', key='current_theme_text_0')
         self.theme_button = sg.Button(button_text='Change current theme', expand_x=True, key='program_theme_button_0')
+        self.timezone_title = sg.Text(f'Timezone: '),
+        self.timezone_text = sg.Text(key=f'current_timezone_text_0')
+        self.timezone_button = sg.Button(button_text='Change Timezone', expand_x=True, key=f'change_timezone_button_0')
 
         self.save_folder = sg.Text('Save Folder: ')
         self.save_folder_input = sg.Input(default_text='', expand_x=True, key='save_folder_input_0')
@@ -42,7 +49,6 @@ class SettingsWindow:
         self.username_input = sg.Input(default_text='', expand_x=True, key='username_input_0')
         self.password_input = sg.Input(default_text='', expand_x=True, password_char='x', key='password_input_0')
         self.load_user_details_button = sg.Button('Login with User Details', expand_x=True, key='login_user_button_0')
-
 
     def get_preview_themes_window_layout(self, suffix, new_theme=None):
         sg.theme(new_theme)
@@ -85,6 +91,46 @@ class SettingsWindow:
             if event in f'close_preview_theme_window{self.preview_themes_suffix}':
                 window.close()
                 break
+
+    def get_timezone_window_layout(self, suffix, current_timezone):
+        layout = [
+            [sg.Text(f'Current Timezone: {current_timezone}')],
+            [sg.Text("A List of Timezones and it's retrospective country")],
+            [sg.Combo(pytz.common_timezones, expand_x=True,
+                      default_value=current_timezone,
+                      enable_events=True, key=f'timezone_list{suffix}')],
+            [sg.Button(button_text='Set current timezone', expand_x=True, key=f'set_timezone_button{suffix}')],
+            [sg.Button('Close', expand_x=True, key=f'close_preview_timezones_window{suffix}')]
+        ]
+        return layout
+
+    def run_preview_timezones_window(self, window_num, current_timezone):
+        suffix = '_' + str(window_num)
+        self.preview_timezones_suffix = suffix
+        layout = self.get_timezone_window_layout(suffix, current_timezone)
+        window = sg.Window(f'Preview Timezones{suffix}', layout, modal=True, keep_on_top=True, no_titlebar=True,
+                           grab_anywhere=True)
+        while True:
+            event, values = window.read()
+            if event in f'timezone_list{suffix}':
+                window.close()
+                window_num += 1
+                new_suffix = '_' + str(window_num)
+                self.preview_timezones_suffix = new_suffix
+                window = sg.Window(f'Preview Timezones{new_suffix}',
+                                   self.get_timezone_window_layout(self.preview_timezones_suffix,
+                                                                   values[f'timezone_list{suffix}']),
+                                   modal=True,
+                                   keep_on_top=True,
+                                   no_titlebar=True,
+                                   grab_anywhere=True)
+            if event in f'set_timezone_button{self.preview_timezones_suffix}':
+                window.close()
+                return values[f'timezone_list{self.preview_timezones_suffix}']
+            if event in f'close_preview_timezones_window{self.preview_timezones_suffix}':
+                window.close()
+                break
+
 
     @pysnooper.snoop()
     def run_select_folder_window(self):
@@ -193,7 +239,7 @@ class SettingsWindow:
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(535, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def create_new_window(self, window_num, new_theme=None):
+    def create_new_window(self, window_num, timezone, new_theme=None):
         sg.theme(new_theme)
         suffix = '_' + window_num
         new_title = (self.get_title() + suffix)
@@ -223,7 +269,11 @@ class SettingsWindow:
         new_system_tab_layout = [
             [sg.Text(f'Theme: {sg.theme()}', key=f'current_theme_text{suffix}')],
             [sg.Button(button_text='Change current theme', expand_x=True,
-                       key=f'program_theme_button{suffix}')]
+                       key=f'program_theme_button{suffix}')],
+            [sg.Text('Timezone: ', key=f'current_timezone_text{suffix}'),
+             sg.Text(f'{timezone}', key=f'current_timezone_text{suffix}')],
+            [sg.Button(button_text='Change Timezone', expand_x=True,
+                       key=f'change_timezone_button{suffix}')]
         ]
         new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
 
