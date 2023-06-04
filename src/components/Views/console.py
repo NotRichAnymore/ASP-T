@@ -110,7 +110,8 @@ class Console:
         return self.prompt_line
 
     def execute_command(self, command_arguments):
-        return self.command_controller.execute_command(command_arguments)
+        additional_parameters = [self.establish_timezone()]
+        return self.command_controller.execute_command(command_arguments, additional_parameters)
 
     def log_command(self, response):
         #  return self.command_controller.save_command_response(response)
@@ -192,7 +193,8 @@ class Console:
                     self.settings_window_num += 1
                     window.close()
                     window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
-                                                                new_theme=self.establish_current_theme())
+                                                                new_theme=self.establish_current_theme(),
+                                                                timezone=self.establish_timezone())
 
                 elif event == f'load_save_folder_button{self.suffix}':
                     success = True

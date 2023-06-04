@@ -10,7 +10,7 @@ import pysnooper
 class SettingsWindow:
 
     def __init__(self):
-
+        self.timezone = None
         self.preview_themes_suffix = None
         self.preview_timezones_suffix = None
         image_folder = Path('src').resolve().parent.parent.joinpath('data/images').as_posix()
@@ -239,7 +239,7 @@ class SettingsWindow:
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(535, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def create_new_window(self, window_num, timezone, new_theme=None):
+    def create_new_window(self, window_num, timezone=None, new_theme=None):
         sg.theme(new_theme)
         suffix = '_' + window_num
         new_title = (self.get_title() + suffix)
@@ -268,10 +268,10 @@ class SettingsWindow:
 
         new_system_tab_layout = [
             [sg.Text(f'Theme: {sg.theme()}', key=f'current_theme_text{suffix}')],
+            [sg.Text('Timezone:', key=f'current_timezone_text{suffix}'),
+             sg.Text(f'{self.timezone if not timezone else timezone}', key=f'current_timezone_text{suffix}')],
             [sg.Button(button_text='Change current theme', expand_x=True,
                        key=f'program_theme_button{suffix}')],
-            [sg.Text('Timezone: ', key=f'current_timezone_text{suffix}'),
-             sg.Text(f'{timezone}', key=f'current_timezone_text{suffix}')],
             [sg.Button(button_text='Change Timezone', expand_x=True,
                        key=f'change_timezone_button{suffix}')]
         ]
@@ -293,8 +293,8 @@ class SettingsWindow:
             [new_tab_group],
             [sg.Sizegrip()]
         ]
-
-        return sg.Window(title=new_title, layout=new_layout, size=(535, 500), no_titlebar=True,
+        self.timezone = timezone
+        return sg.Window(title=new_title, layout=new_layout, size=(560, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True, resizable=True)
 
     def run_window(self):

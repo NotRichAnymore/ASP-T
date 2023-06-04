@@ -113,7 +113,7 @@ class MainWindow:
 
 
         ]
-        return sg.Window(title=new_title, layout=new_layout, size=(size if size is not None else (1000, 700)),
+        return sg.Window(title=new_title, layout=new_layout, size=(size if size is not None else (1050, 700)),
                          no_titlebar=True, resizable=True, return_keyboard_events=True, grab_anywhere=True,
                          keep_on_top=(keep_on_top if keep_on_top is not None else True), modal=True, finalize=True,
                          use_default_focus=False)

@@ -82,6 +82,7 @@ class CommandService:
         tokens = command_statement.split(' ')
         self.command_format = self.establish_command_format(tokens[0])
         self.determine_command(tokens, self.command_format)
+        return self.command_name
 
     def remove_none_values(self):
         command = []
@@ -90,7 +91,7 @@ class CommandService:
                 command.append(ele)
         self.command = command
 
-    def run_command(self):
+    def run_command(self, additional_parameters):
         match self.command_name:
             case 'help':
                 return self.help_command()
@@ -100,7 +101,7 @@ class CommandService:
                 return self.history_command()
             case 'date':
                 self.remove_none_values()
-                return self.date_command()
+                return self.date_command(additional_parameters[0])
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -124,13 +125,13 @@ class CommandService:
     def history_command(self):
         pass
 
-    def date_command(self):
+    def date_command(self, timezone):
         if len(self.command) == 1:
-            return self.repository.get_current_datetime()
+            return self.repository.get_current_datetime(timezone)
 
         if '-u' in self.command_opts:
             match self.command_opts:
-                case '-u':
+                case ['-u']:
                     return self.repository.get_global_datetimes()
                 case ['-u', '--format=']:
                     if self.validator.validate_date_format(self.datetime_format):

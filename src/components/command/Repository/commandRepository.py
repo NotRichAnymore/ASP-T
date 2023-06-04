@@ -64,10 +64,12 @@ class CommandRepository:
     def get_current_date(self):
         return datetime.datetime.now().date()
 
-    def get_current_datetime(self, fmt=None):
+    def get_current_datetime(self, timezone, fmt=None):
+        if isinstance(timezone, str):
+            timezone = pytz.timezone(timezone)
         if fmt:
-            return datetime.datetime.now().strftime(fmt)
-        return datetime.datetime.now()
+            return datetime.datetime.now().astimezone(timezone).strftime(fmt)
+        return datetime.datetime.now().astimezone(timezone)
 
     @staticmethod
     def get_global_datetimes(fmt=None):
