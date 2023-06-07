@@ -2,6 +2,7 @@ import datetime
 import pysnooper
 from src.components.command.exceptions import InvalidCommandFormatError
 
+
 @pysnooper.snoop()
 class CommandValidator:
     def __init__(self):

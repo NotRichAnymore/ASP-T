@@ -1,7 +1,7 @@
 import logging
 import pysnooper
 import pytz
-
+import re
 from src.components.Utilities.utilities import hash_password
 
 
@@ -142,5 +142,39 @@ class SettingsService:
         if not prompt_line:
             return self.prompt_line_from_settings()
         return self.defined_prompt_line(prompt_line)
+
+    def normalise_format_string(self, fmt):
+        split_fmt = fmt.split(':')
+        split_fmt = [ele.split('%') for ele in split_fmt]
+        new_fmt = []
+        for index in range(len(split_fmt)):
+            for token in split_fmt[index]:
+                if re.match(r'[a-zA-Z]', token):
+                    new_fmt.append(f'%{token}')
+        return ':'.join(new_fmt)
+
+    def encode_format_string(self, fmt):
+        split_fmt = fmt.split(':')
+        new_fmt = []
+        for token in split_fmt:
+            if token.startswith('%'):
+                new_fmt.append(f'%{token}')
+        return ':'.join(new_fmt)
+
+    def save_datetime_format(self, fmt):
+        parsed_fmt = self.encode_format_string(self.normalise_format_string(fmt))
+        self.repository.change_datetime_format(parsed_fmt)
+        return f'Datetime format changed to {fmt}'
+
+    def get_current_datetime_format(self):
+        format_string = self.repository.get_datetime_format()
+        return self.normalise_format_string(format_string)
+
+    def establish_datetime_format(self, fmt=None):
+        if not fmt:
+            return self.get_current_datetime_format()
+        return self.save_datetime_format(fmt)
+
+
 
 

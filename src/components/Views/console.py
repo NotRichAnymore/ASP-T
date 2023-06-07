@@ -8,6 +8,7 @@ import pytz
 from src.components.Views import settingsWindow, mainWindow, systemTray
 from src.data.files.custom_themes import custom_themes
 from src.components.Utilities.loggingUtilities import LoggingUtilities
+from src.components.Utilities.utilities import is_iterable
 from pathlib import Path
 
 
@@ -110,8 +111,13 @@ class Console:
         return self.prompt_line
 
     def execute_command(self, command_arguments):
-        additional_parameters = [self.establish_timezone()]
+        additional_parameters = [self.establish_timezone(), self.establish_datetime_format()]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
+
+    def establish_datetime_format(self, fmt=None):
+        if not fmt:
+            return self.settings_controller.manage_datetime_format()
+        return self.settings_controller.manage_datetime_format(fmt)
 
     def log_command(self, response):
         #  return self.command_controller.save_command_response(response)
@@ -312,6 +318,8 @@ class Console:
                             continue
                         elif response == 'clear':
                             window[f'output_screen{self.suffix}'].update(' ')
+                        elif is_iterable(response) and response[0] == 'date':
+                            response = self.establish_datetime_format(response[1])
                         elif isinstance(response, list):
                             for line in response:
                                 print(line)

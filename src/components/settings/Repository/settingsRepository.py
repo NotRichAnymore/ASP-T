@@ -151,6 +151,16 @@ class SettingsRepository:
         self.write_to_config()
         self.logger.create_log_entry(level=logging.INFO, message='Timezone changed')
 
+    def change_datetime_format(self, fmt):
+        self.read_config()
+        self.logger.create_log_entry(
+            level=logging.INFO,
+            message=f"Changing datetime format from {self.updater['System']['datetime_format']} to {fmt}"
+        )
+        self.updater['System']['datetime_format'] = fmt
+        self.write_to_config()
+        self.logger.create_log_entry(level=logging.INFO, message='Datetime format changed')
+
     def create_existing_settings(self):
         self.read_config()
         self.logger.create_log_entry(level=logging.INFO, message=f'Creating existing settings from {self.config_path}')
@@ -331,5 +341,9 @@ class SettingsRepository:
     def get_prompt_line(self):
         self.read_config()
         return self.updater['System']['prompt_line'].value
+
+    def get_datetime_format(self):
+        self.read_config()
+        return self.updater['System']['datetime_format'].value
 
 

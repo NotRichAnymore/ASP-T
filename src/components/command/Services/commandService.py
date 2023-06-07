@@ -67,11 +67,9 @@ class CommandService:
             case 'date':
                 for token in tokens:
                     if token.startswith('--format='):
-                        self.datetime_format = re.sub('--format=', '', token)
-                        format_opt = re.sub(self.datetime_format, '', token)
-                        format_index = tokens.index(token)
-                        tokens.remove(token)
-                        tokens.insert(format_index, format_opt)
+                        self.datetime_format, tokens = self.set_variable_splitter('--format=', token, tokens)
+                    if token.startswith('--Set='):
+                        self.datetime_format, tokens = self.set_variable_splitter('--Set=', token, tokens)
 
         self.command_args = self.determine_command_arguments(self.command_name, command_format[1], tokens[1:])
         self.command_opts = self.determine_command_options(self.command_name, command_format[2], tokens[1:])
@@ -84,6 +82,14 @@ class CommandService:
         self.determine_command(tokens, self.command_format)
         return self.command_name
 
+    def set_variable_splitter(self, variable, datestr, lst):
+        variable = re.sub(variable, '', datestr)
+        opt = re.sub(variable, '', datestr)
+        index = lst.index(datestr)
+        lst.remove(datestr)
+        lst.insert(index, opt)
+        return variable, lst
+        
     def remove_none_values(self):
         command = []
         for ele in self.command:
@@ -91,7 +97,7 @@ class CommandService:
                 command.append(ele)
         self.command = command
 
-    def run_command(self, additional_parameters):
+    def run_command(self, additional_parameters=None):
         match self.command_name:
             case 'help':
                 return self.help_command()
@@ -101,7 +107,7 @@ class CommandService:
                 return self.history_command()
             case 'date':
                 self.remove_none_values()
-                return self.date_command(additional_parameters[0])
+                return self.date_command(additional_parameters)
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -125,23 +131,33 @@ class CommandService:
     def history_command(self):
         pass
 
-    def date_command(self, timezone):
+    def date_command(self, additional_parameters):
+        timezone, format_string = additional_parameters
         if len(self.command) == 1:
-            return self.repository.get_current_datetime(timezone)
+            return self.repository.get_current_datetime(timezone, format_string)
 
         if '-u' in self.command_opts:
             match self.command_opts:
                 case ['-u']:
-                    return self.repository.get_global_datetimes()
+                    return self.repository.get_global_datetimes(format_string)
                 case ['-u', '--format=']:
                     if self.validator.validate_date_format(self.datetime_format):
                         return self.repository.get_global_datetimes(self.datetime_format)
 
         if '--format=' in self.command_opts and self.validator.validate_date_format(self.datetime_format):
-            return self.repository.get_current_datetime(self.datetime_format)
+            match self.command_opts:
+                case ['--format=']:
+                    return self.repository.get_current_datetime(timezone, self.datetime_format)
+                case ['--format=', '-s']:
+                    return self.repository.set_datetime_format(self.datetime_format)
+        if '--Set=' or '-s' in self.command_opts:
+            if self.validator.validate_date_format(self.datetime_format):
+                match self.command_opts:
+                    case ['--Set=']:
+                        return self.repository.set_datetime_format(self.datetime_format)
+                    case ['-s']:
+                        return self.repository.set_datetime_format(self.datetime_format)
 
-        if '-s' or '--Set' in self.command_opts:
-            pass
 
         return InvalidCommandFormatError(self.command_name, self.command_format)
 

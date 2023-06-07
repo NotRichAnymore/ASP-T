@@ -35,5 +35,8 @@ class SettingsController:
     def manage_prompt_line(self, prompt_line=None):
         return self.service.prompt_line_handling(prompt_line)
 
+    def manage_datetime_format(self, fmt=None):
+        return self.service.establish_datetime_format(fmt)
+
 
 

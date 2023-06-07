@@ -231,5 +231,14 @@ def hash_password(string):
     return bcrypt.hashpw(base64.b64encode(bytes(string, 'utf-8')), bcrypt.gensalt())
 
 
+def is_iterable(element):
+    try:
+        if iter(element):
+            return True
+        return False
+    except Exception as e:
+        return False
+
+
 
 

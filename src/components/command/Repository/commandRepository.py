@@ -71,6 +71,9 @@ class CommandRepository:
             return datetime.datetime.now().astimezone(timezone).strftime(fmt)
         return datetime.datetime.now().astimezone(timezone)
 
+    def set_datetime_format(self, fmt):
+        return 'date', fmt
+
     @staticmethod
     def get_global_datetimes(fmt=None):
         global_datetimes = []
