@@ -4,6 +4,7 @@ import traceback
 import pysnooper
 import PySimpleGUI as sg
 import pytz
+import time
 
 from src.components.Views import settingsWindow, mainWindow, systemTray
 from src.data.files.custom_themes import custom_themes
@@ -111,13 +112,43 @@ class Console:
         return self.prompt_line
 
     def execute_command(self, command_arguments):
-        additional_parameters = [self.establish_timezone(), self.establish_datetime_format()]
+        additional_parameters = [self.establish_timezone(),
+                                 self.establish_datetime_format(),
+                                 self.establish_runtime(current=True)]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
+
+    def manage_response(self, response, window):
+        match response:
+            case None:
+                return 'continue'
+            case 'clear':
+                window[f'output_screen{self.suffix}'].update(' ')
+            case [is_iterable(response)] if response[0] == 'date':
+                response = self.establish_datetime_format(response[1])
+            case [is_iterable(response)] if response[0] == 'sleep':
+                self.system_sleep(response[1])
+                response = ' '
+            case is_iterable(response):
+                for line in response:
+                    print(line)
+                return 'continue'
+        print(response)
+        print('\n')
 
     def establish_datetime_format(self, fmt=None):
         if not fmt:
             return self.settings_controller.manage_datetime_format()
         return self.settings_controller.manage_datetime_format(fmt)
+
+    def system_sleep(self, amount):
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program sleeping for {amount}')
+        if is_iterable(amount):
+            for ele in amount:
+                time.sleep(int(ele))
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program slept for {amount}')
+
+    def establish_runtime(self, startup=None, current=None):
+        return self.settings_controller.manage_runtime(startup, current)
 
     def log_command(self, response):
         #  return self.command_controller.save_command_response(response)
@@ -153,6 +184,7 @@ class Console:
         self.establish_timezone(current_timezone)
         current_prompt_line = settings['System']['prompt_line']
         self.establish_prompt_line(prompt_line=current_prompt_line)
+        self.establish_runtime(startup=True)
         # Set main window as the currently running window and gui is currently running
         self.update_active_window(None, 'main_window', True)
         self.logger.create_log_entry(level=logging.CRITICAL, message='Ending Program Setup')
@@ -314,18 +346,7 @@ class Console:
                         print(command_arguments)
                         response = self.execute_command(command_arguments)
                         # self.log_command(response)
-                        if response is None:
-                            continue
-                        elif response == 'clear':
-                            window[f'output_screen{self.suffix}'].update(' ')
-                        elif is_iterable(response) and response[0] == 'date':
-                            response = self.establish_datetime_format(response[1])
-                        elif isinstance(response, list):
-                            for line in response:
-                                print(line)
-                            continue
-                        print(response)
-                        print('\n')
+                        self.manage_response(response, window)
 
                     if not run_event_loop:
                         break

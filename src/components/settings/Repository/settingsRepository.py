@@ -209,6 +209,7 @@ class SettingsRepository:
                 prompt_line = {'{guest}|' + get_root_directory() + '$'}
                 timezone = {pytz.UTC}
                 datetime_format = Null
+                startup_time = Null
 
                 [Files]
                 config.ini = {self.config_path}
@@ -346,4 +347,12 @@ class SettingsRepository:
         self.read_config()
         return self.updater['System']['datetime_format'].value
 
+    def set_startup_time(self, start_time):
+        self.read_config()
+        self.updater['System']['startup_time'] = start_time
+        self.updater.update_file()
+
+    def get_startup_time(self):
+        self.read_config()
+        return self.updater['System']['startup_time'].value
 

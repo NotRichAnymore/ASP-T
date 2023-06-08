@@ -63,7 +63,7 @@ class SettingsWindow:
         ]
         return layout
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def run_preview_themes_window(self, window_num, new_theme=None):
         sg.theme(new_theme)
         suffix = '_' + str(window_num)
@@ -132,7 +132,7 @@ class SettingsWindow:
                 break
 
 
-    @pysnooper.snoop()
+    # @pysnooper.snoop()
     def run_select_folder_window(self):
         background_color = sg.theme_input_background_color()
         layout = [
@@ -173,7 +173,8 @@ class SettingsWindow:
         while True:
 
             window[f'files_output{suffix}'].update((f"Save Folder: {files_tab['Save Folder']}\n"))
-            window[f'system_output{suffix}'].update((f"Theme: {system_tab['Theme']}\n"))
+            window[f'system_output{suffix}'].update((f"Theme: {system_tab['Theme']}\n"
+                                                     f"Timezone: {system_tab['Timezone']}"))
             window[f'database_output{suffix}'].update((f"{database_tab['Database']}\n"
                                                        f"Username: {database_tab['Username']}\n"
                                                        f"Password: {database_tab['Password']}"))

@@ -1,4 +1,7 @@
+import datetime
 import logging
+import time
+
 import pysnooper
 import pytz
 import re
@@ -175,6 +178,19 @@ class SettingsService:
             return self.get_current_datetime_format()
         return self.save_datetime_format(fmt)
 
+    def establish_runtime(self, startup=None, current=None):
+        if startup:
+            start_time = datetime.datetime.now().strftime('%H:%m:%S')
+            self.repository.set_startup_time(start_time)
+        if current:
+            start_time = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%m:%S'), '%H:%m:%S')
+            seconds = int(datetime.datetime.strptime(self.repository.get_startup_time(), '%H').strftime('%H')) / 3600 +\
+                int(datetime.datetime.strptime(self.repository.get_startup_time(), '%m').strftime('%m')) / 360 +\
+                int(datetime.datetime.strptime(self.repository.get_startup_time(), '%S').strftime('%S'))
+            present_time = datetime.timedelta(seconds=seconds)
+            current_time = start_time - present_time
+
+            return current_time
 
 
 

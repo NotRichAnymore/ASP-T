@@ -17,3 +17,24 @@ class CommandValidator:
         except Exception:
             return False
 
+    def validate_command(self, tokens: list, command_name, command_format):
+        match command_name:
+            case 'help':
+                if len(tokens) != 2:
+                    raise InvalidCommandFormatError(command_name, command_format)
+            case 'clear':
+                if len(tokens) != 1:
+                    raise InvalidCommandFormatError(command_name, command_format)
+            case 'history':
+                if len(tokens) != 1:
+                    raise InvalidCommandFormatError(command_name, command_format)
+            case 'date':
+                if len(tokens) > 3:
+                    raise InvalidCommandFormatError(command_name, command_format)
+            case 'sleep':
+                if len(tokens) > 2:
+                    raise InvalidCommandFormatError(command_name, command_format)
+            case 'uptime':
+                if len(tokens) != 1:
+                    raise InvalidCommandFormatError(command_name, command_format)
+

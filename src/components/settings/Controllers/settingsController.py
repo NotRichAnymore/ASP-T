@@ -38,5 +38,8 @@ class SettingsController:
     def manage_datetime_format(self, fmt=None):
         return self.service.establish_datetime_format(fmt)
 
+    def manage_runtime(self, startup=None, current=None):
+        return self.service.establish_runtime(startup, current)
+
 
 
