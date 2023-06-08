@@ -1,12 +1,16 @@
+import logging
+
 from src.components.command.exceptions import InvalidCommandFormatError
 import pysnooper
 import re
+from pathlib import Path
 
 @pysnooper.snoop()
 class CommandService:
-    def __init__(self, repo, validator):
+    def __init__(self, repo, validator, logger):
         self.repository = repo
         self.validator = validator
+        self.logger = logger
         self.command_name = None
         self.command_args = []
         self.command_opts = []
@@ -77,7 +81,7 @@ class CommandService:
         return self.command_name
 
     def history_command(self):
-        pass
+        return self.command_name
 
     def date_command(self, additional_details):
         timezone, format_string = additional_details[:2]
@@ -186,5 +190,18 @@ class CommandService:
             return self.execute_command()
         return self.execute_command(additional_details)
 
+    def write_command_response(self, command_response, save_folder, clear_file=None):
+        save_path = Path(save_folder).joinpath('command_history.txt')
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'Using {save_path}')
+        mode = 'a+'
+        if clear_file:
+            mode = 'w+'
+        with open(save_path, mode) as output_file:
+            output_file.writelines(command_response + '\n')
+            self.logger.create_log_entry(level=logging.DEBUG, message=f'Command Response written to {save_path}')
 
-
+    def read_command_history(self, save_folder):
+        save_path = Path(save_folder).joinpath('command_history.txt')
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'Reading from {save_path}')
+        with open(save_path, 'r') as output_file:
+            return output_file.readlines()

@@ -12,6 +12,13 @@ class CommandController:
         except Exception as e:
             return e
 
+    def save_command_response(self, command_response, save_folder, write=None, read=None, startup=None):
+        if write:
+            self.service.write_command_response(command_response, save_folder)
+        if read:
+            return self.service.read_command_history(save_folder)
+        if startup:
+            self.service.write_command_response('', save_folder, clear_file=True)
 
 
 

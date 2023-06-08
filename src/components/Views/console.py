@@ -71,6 +71,7 @@ class Console:
             self.save_folder = updated_settings['Files']['save_folder']
             self.settings = updated_settings
             self.logger.create_log_entry(level=logging.CRITICAL, message='Settings Updated')
+        return self.settings_controller.manage_save_folder()
 
     def establish_timezone(self, timezone=None):
         if timezone:
@@ -117,7 +118,7 @@ class Console:
                                  self.establish_runtime(current=True)]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
-    def manage_response(self, response, window):
+    def manage_response(self, command_args, response, window):
         if response is None:
             return 'continue'
         elif response == 'clear':
@@ -125,12 +126,18 @@ class Console:
         elif is_iterable(response) and response[0] == 'date':
             response = self.establish_datetime_format(response[1])
         elif is_iterable(response) and response[0] == 'sleep':
+            self.log_command(command_args)
             self.system_sleep(response[1])
             response = ' '
+        elif response == 'history':
+            for line in self.log_command(command_args, response, read=True):
+                print(line)
+            return 'continue'
         elif isinstance(response, list):
             for line in response:
                 print(line)
             return 'continue'
+        self.log_command(command_args, response, write=True)
         print(response)
         print('\n')
 
@@ -149,9 +156,13 @@ class Console:
     def establish_runtime(self, startup=None, current=None):
         return self.settings_controller.manage_runtime(startup, current)
 
-    def log_command(self, response):
-        #  return self.command_controller.save_command_response(response)
-        pass
+    def log_command(self, command_args=None, response=None, write=None, read=None, startup=None):
+        command_response = f'Input: {command_args} Output: {response}'
+        return self.command_controller.save_command_response(command_response,
+                                                             self.establish_save_folder(),
+                                                             write,
+                                                             read,
+                                                             startup)
 
     def get_active_window(self):
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting active window')
@@ -184,6 +195,7 @@ class Console:
         current_prompt_line = settings['System']['prompt_line']
         self.establish_prompt_line(prompt_line=current_prompt_line)
         self.establish_runtime(startup=True)
+        self.log_command(startup=True)
         # Set main window as the currently running window and gui is currently running
         self.update_active_window(None, 'main_window', True)
         self.logger.create_log_entry(level=logging.CRITICAL, message='Ending Program Setup')
@@ -344,8 +356,7 @@ class Console:
                         command_arguments = values[f'command_arguments{self.suffix}']
                         print(command_arguments)
                         response = self.execute_command(command_arguments)
-                        # self.log_command(response)
-                        if self.manage_response(response, window) == 'continue':
+                        if self.manage_response(command_arguments, response, window) == 'continue':
                             continue
                     if not run_event_loop:
                         break

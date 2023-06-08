@@ -28,7 +28,7 @@ def run_program():
 
     command_repo = CommandRepository()
     command_validator = CommandValidator()
-    command_service = CommandService(command_repo, command_validator)
+    command_service = CommandService(command_repo, command_validator, logger)
     command_controller = CommandController(command_service)
 
     window_repo = WindowRepository(logger)

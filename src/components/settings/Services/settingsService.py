@@ -61,9 +61,11 @@ class SettingsService:
 
     def establish_save_folder(self, new_save_folder):
         save_folder = self.repository.get_save_folder()
-        if self.validator.validate_save_folder(new_save_folder, save_folder):
-            self.repository.change_save_folder(new_save_folder)
-            return self.repository.create_existing_settings()
+        if new_save_folder:
+            if self.validator.validate_save_folder(new_save_folder, save_folder):
+                self.repository.change_save_folder(new_save_folder)
+                return self.repository.create_existing_settings()
+        return save_folder
 
     def establish_timezone(self, new_timezone):
         if new_timezone:

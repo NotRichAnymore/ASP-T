@@ -76,7 +76,7 @@ class SettingsRepository:
                 level=logging.DEBUG, message=f'Setting config path as {path} from {self.config_path}')
             self.read_config()
             self.updater['Files']['config.ini'] = self.get_config_path()
-            self.config_path = self.updater['Files']['config.ini']
+            self.config_path = self.updater['Files']['config.ini'].value
         except FileNotFoundError as e:
             self.logger.create_log_entry(level=logging.ERROR, message=f'Unable to set {path}'
                                                                       f'Stack Trace: {str(e)}')
@@ -86,7 +86,7 @@ class SettingsRepository:
             level=logging.DEBUG, message=f'Setting save folder as {folder} from {self.save_folder}')
         self.read_config()
         self.updater['Files']['save_folder'] = folder
-        self.save_folder = self.updater['Files']['save_folder']
+        self.save_folder = self.updater['Files']['save_folder'].value
 
 
     def set_user_details_path(self, path):
@@ -94,7 +94,7 @@ class SettingsRepository:
             level=logging.DEBUG, message=f'Setting user details path as {path} from {self.user_details_path}')
         self.read_config()
         self.updater['Files']['user_details_path'] = path
-        self.user_details_path = self.updater['Files']['user_details_path']
+        self.user_details_path = self.updater['Files']['user_details_path'].value
 
     def set_themes(self, themes):
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Setting theme as {themes} from {self.themes}')
