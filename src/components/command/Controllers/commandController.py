@@ -8,7 +8,7 @@ class CommandController:
 
     def execute_command(self, command_arguments, additional_parameters):
         try:
-            return self.service.run_command(additional_parameters)
+            return self.service.run_command(command_arguments, additional_parameters)
         except Exception as e:
             return e
 

@@ -118,20 +118,19 @@ class Console:
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
     def manage_response(self, response, window):
-        match response:
-            case None:
-                return 'continue'
-            case 'clear':
-                window[f'output_screen{self.suffix}'].update(' ')
-            case [is_iterable(response)] if response[0] == 'date':
-                response = self.establish_datetime_format(response[1])
-            case [is_iterable(response)] if response[0] == 'sleep':
-                self.system_sleep(response[1])
-                response = ' '
-            case is_iterable(response):
-                for line in response:
-                    print(line)
-                return 'continue'
+        if response is None:
+            return 'continue'
+        elif response == 'clear':
+            window[f'output_screen{self.suffix}'].update(' ')
+        elif is_iterable(response) and response[0] == 'date':
+            response = self.establish_datetime_format(response[1])
+        elif is_iterable(response) and response[0] == 'sleep':
+            self.system_sleep(response[1])
+            response = ' '
+        elif isinstance(response, list):
+            for line in response:
+                print(line)
+            return 'continue'
         print(response)
         print('\n')
 
@@ -346,8 +345,8 @@ class Console:
                         print(command_arguments)
                         response = self.execute_command(command_arguments)
                         # self.log_command(response)
-                        self.manage_response(response, window)
-
+                        if self.manage_response(response, window) == 'continue':
+                            continue
                     if not run_event_loop:
                         break
 

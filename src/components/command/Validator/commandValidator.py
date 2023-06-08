@@ -8,10 +8,10 @@ class CommandValidator:
     def __init__(self):
         self.current_datetime = datetime.datetime.now()
 
-    def validate_date_format(self, fmt: str):
+    def validate_date_format(self, command_details, fmt: str):
         try:
             if not fmt:
-                raise InvalidCommandFormatError(self.command_name, self.command_format)
+                raise InvalidCommandFormatError(command_details[0], command_details[1])
             self.current_datetime.strftime(fmt)
             return True
         except Exception:
