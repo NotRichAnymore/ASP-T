@@ -84,7 +84,7 @@ class Console:
         return self.settings_controller.manage_timezone()
 
 
-    def establish_user_variables(self, username, password):
+    def establish_user_variables(self, username=None, password=None, check_active_user=None):
 
         if username and password:
             self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
@@ -94,6 +94,10 @@ class Console:
                                                                          f'{success if success is not None else False}')
             if success:
                 return username
+
+        if check_active_user:
+            return self.settings_controller.manage_user_credentials(username=username,
+                                                                    check_active_user=check_active_user)
 
     def establish_prompt_line(self, username=None, prompt_line=None):
         # Change the prompt line if either param is present
@@ -115,7 +119,8 @@ class Console:
     def execute_command(self, command_arguments):
         additional_parameters = [self.establish_timezone(),
                                  self.establish_datetime_format(),
-                                 self.establish_runtime(current=True)]
+                                 self.establish_runtime(current=True)
+                                 ]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
     def manage_response(self, command_args, response, window):
@@ -133,6 +138,8 @@ class Console:
             for line in self.log_command(command_args, response, read=True):
                 print(line)
             return 'continue'
+        elif response == 'id':
+            response = self.establish_user_variables(check_active_user=True)
         elif isinstance(response, list):
             for line in response:
                 print(line)
@@ -157,7 +164,7 @@ class Console:
         return self.settings_controller.manage_runtime(startup, current)
 
     def log_command(self, command_args=None, response=None, write=None, read=None, startup=None):
-        command_response = f'Input: {command_args} Output: {response}'
+        command_response = f'Input: {command_args}\n Output: {response}'
         return self.command_controller.save_command_response(command_response,
                                                              self.establish_save_folder(),
                                                              write,

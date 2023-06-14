@@ -110,9 +110,11 @@ class SettingsService:
                 self.repository.establish_credential_variables(user_details, set_active_user=True)
                 return self.validator.validate_user_details(username, password, user_details)
 
-    def credential_handling(self, username, password, check_active_user=False):
-        if username and check_active_user:
-            return self.validator.is_active_user(username, self.repository.get_active_user())
+    def credential_handling(self, username, password, check_active_user=None):
+        if check_active_user:
+            if username:
+                return self.validator.is_active_user(username, self.repository.get_active_user())
+            return self.repository.get_active_user()
 
         if username and password:
             if not self.repository.database_exists():

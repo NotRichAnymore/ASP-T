@@ -120,6 +120,20 @@ class MySQLUtilities:
             return cursor.fetchall()
         except Error as e:
             return e
+
+    @staticmethod
+    @pysnooper.snoop()
+    def get_all_users_ids():
+        try:
+            query = """
+            SELECT users.id FROM users;
+            """
+            cursor = MySQLUtilities.connection.cursor()
+            cursor.execute(query)
+            return cursor.fetchall()
+
+        except Error as e:
+            return e
         
     @staticmethod
     @pysnooper.snoop()
@@ -178,7 +192,7 @@ class MySQLUtilities:
             return e
         
 
-    def get_user_by_id(self, user_id):
+    def get_username_by_id(self, user_id):
         try:
             query = f"""
             SELECT username FROM aspt.users
@@ -189,6 +203,26 @@ class MySQLUtilities:
             return cursor.fetchall()
         except Error as e:
             return e
-        
+
+    def get_id_by_username(self, username):
+        try:
+            query = f"""
+            SELECT id FROM aspt.users
+            WHERE users.username = %(users.username)s;
+            """
+            cursor = MySQLUtilities.connection.cursor()
+            cursor.execute(query, {'users.username': username})
+            return cursor.fetchall()
+        except Error as e:
+            return e
+
+    def get_usernames_and_ids(self):
+        usernames = self.get_all_users()
+        ids = self.get_all_users_ids()
+        username_and_id = []
+        for i in range(len(ids)):
+            for k, v in zip(ids, usernames):
+                username_and_id.append((str(k[i]), v[i]))
+            return username_and_id
 
 

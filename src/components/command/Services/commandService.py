@@ -1,6 +1,7 @@
 import logging
 
 from src.components.command.exceptions import InvalidCommandFormatError
+from src.components.Utilities.mySQLUtilities import MySQLUtilities
 import pysnooper
 import re
 from pathlib import Path
@@ -17,6 +18,7 @@ class CommandService:
         self.command = []
         self.command_format = None
         self.datetime_format = None
+        self.sql = None
 
     def establish_command_format(self, command):
         return self.repository.get_command_format(command)
@@ -37,6 +39,20 @@ class CommandService:
                 return tokens
             case 'uptime':
                 return None
+            case 'id':
+                try:
+                    self.sql = self.sql = MySQLUtilities(host='127.0.0.1',
+                                                         username='test_user',
+                                                         password='test_pass763',
+                                                         database='aspt')
+                except Exception:
+                    return 'unable to check id'
+                for token in tokens:
+                    ids = self.sql.get_all_users_ids()
+                    users = self.sql.get_all_users()
+                    for i in range(len(ids)):
+                        if int(token) == ids[i][0] or token == users[i][0]:
+                            return token
 
     @staticmethod
     @pysnooper.snoop()
@@ -60,6 +76,13 @@ class CommandService:
                 return None
             case 'uptime':
                 return None
+            case 'id':
+                if len(tokens) == 0:
+                    return None
+                for token in tokens:
+                    if token in opt_format:
+                        options.append(token)
+                return options
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -117,11 +140,24 @@ class CommandService:
     def sleep_command(self):
         return self.command_name, self.command_args
 
-
     def uptime_command(self, additional_details):
         current_time = additional_details[2]
         return current_time
 
+    def id_command(self):
+        if len(self.command) == 1:
+            return self.command_name
+
+        name_and_id = self.sql.get_usernames_and_ids()
+        for i in range(len(name_and_id)):
+            for uid in name_and_id:
+                if self.command_args in uid:
+                    match uid.index(self.command_args):
+                        case 0:
+                            return self.sql.get_username_by_id(uid[uid.index(self.command_args)])[0][0]
+                        case 1:
+                            return self.sql.get_id_by_username(uid[uid.index(self.command_args)])[0][0]
+        return 'id not found'
     @staticmethod
     @pysnooper.snoop()
     def set_variable_splitter(variable, datestr, lst):
@@ -184,6 +220,9 @@ class CommandService:
                 return self.sleep_command()
             case 'uptime':
                 return self.uptime_command(additional_details)
+            case 'id':
+                self.remove_none_values()
+                return self.id_command()
 
     def run_command(self, command_statement, additional_details):
         if not self.parse(command_statement.split(' ')):
