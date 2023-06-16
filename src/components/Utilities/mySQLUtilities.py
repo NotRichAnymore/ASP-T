@@ -89,7 +89,10 @@ class MySQLUtilities:
         except Error as e:
             return e
         
-
+    def create_timestamp(self):
+        current_time = str(datetime.datetime.now().time())
+        parsed_time = [current_time[:current_time.index(ele)] for ele in current_time if ele == '.']
+        return f"{str(datetime.datetime.now().date())} {''.join(parsed_time)}"
 
     def insert_into_users_table(self, username, hashed_password):
         try:
@@ -97,11 +100,30 @@ class MySQLUtilities:
             INSERT INTO ASPT.users (username, hashed_password, transaction_time)
             VALUES (%s, %s, %s)
             """
-            current_time = str(datetime.datetime.now().time())
-            parsed_time = [current_time[:current_time.index(ele)] for ele in current_time if ele == '.']
-            timestamp = f"{str(datetime.datetime.now().date())} {''.join(parsed_time)}"
+            timestamp = self.create_timestamp()
 
             values = (username, hashed_password, timestamp)
+            cursor = MySQLUtilities.connection.cursor()
+            cursor.execute(update_query, values)
+            MySQLUtilities.connection.commit()
+        except Error as e:
+            return e
+
+    def update_users_table(self, username=None, hashed_password=None):
+        try:
+            update_query = f"""
+            UPDATE ASPT.users SET users.hashed_password = %(users.hashed_password)s, 
+                                  users.transaction_time = %(users.transaction_time)s
+                WHERE users.id = %(users.id)s
+            """
+            timestamp = self.create_timestamp()
+
+            user_id = self.get_id_by_username(username)
+            values = {"users.username": username,
+                      "users.hashed_password": hashed_password,
+                      "users.transaction_time": timestamp,
+                      "users.id": user_id}
+
             cursor = MySQLUtilities.connection.cursor()
             cursor.execute(update_query, values)
             MySQLUtilities.connection.commit()
@@ -134,7 +156,8 @@ class MySQLUtilities:
 
         except Error as e:
             return e
-        
+
+
     @staticmethod
     @pysnooper.snoop()
     def get_last_entry():
@@ -167,7 +190,7 @@ class MySQLUtilities:
         except Error as e:
             return e
 
-    def query_user_details(self, username, password):
+    def query_user_details(self, username):
         try:
             query = """
             SELECT username, hashed_password FROM aspt.users

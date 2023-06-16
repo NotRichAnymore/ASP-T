@@ -17,6 +17,8 @@ from pathlib import Path
 class Console:
 
     def __init__(self, command_controller, window_controller, settings_controller, logger):
+        self.username = None
+        self.passwd_command = None
         self.prompt_line = None
         self.save_folder = None
         self.command_controller = command_controller
@@ -36,6 +38,7 @@ class Console:
         self.max_window_size = False
         self.min_window_size = False
         self.window_size = None
+        self.change_password = None
         self.logger = logger
 
     def initialise_themes(self):
@@ -84,20 +87,25 @@ class Console:
         return self.settings_controller.manage_timezone()
 
 
-    def establish_user_variables(self, username=None, password=None, check_active_user=None):
+    def establish_user_variables(self, username=None, password=None, check_active_user=None, change_password=None):
 
         if username and password:
-            self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
-            success = self.settings_controller.manage_user_credentials(username, password)
+            if not change_password:
+                self.logger.create_log_entry(level=logging.CRITICAL, message=f'Setting User Details')
+                success = self.settings_controller.manage_user_credentials(username, password)
 
-            self.logger.create_log_entry(level=logging.CRITICAL, message=f'User Details created: '
-                                                                         f'{success if success is not None else False}')
+                self.logger.create_log_entry(level=logging.CRITICAL,
+                                             message=f'User Details created: '
+                                                     f'{success if success is not None else False}')
+
+            success = self.settings_controller.manage_user_credentials(username, password, change_password)
             if success:
                 return username
 
         if check_active_user:
             return self.settings_controller.manage_user_credentials(username=username,
                                                                     check_active_user=check_active_user)
+
 
     def establish_prompt_line(self, username=None, prompt_line=None):
         # Change the prompt line if either param is present
@@ -119,7 +127,8 @@ class Console:
     def execute_command(self, command_arguments):
         additional_parameters = [self.establish_timezone(),
                                  self.establish_datetime_format(),
-                                 self.establish_runtime(current=True)
+                                 self.establish_runtime(current=True),
+                                 self.establish_user_variables(check_active_user=True)
                                  ]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
@@ -133,13 +142,20 @@ class Console:
         elif is_iterable(response) and response[0] == 'sleep':
             self.log_command(command_args)
             self.system_sleep(response[1])
-            response = ' '
+            response = ''
         elif response == 'history':
             for line in self.log_command(command_args, response, read=True):
                 print(line)
             return 'continue'
         elif response == 'id':
             response = self.establish_user_variables(check_active_user=True)
+        elif is_iterable(response) and response[0] == 'passwd':
+            if response[1] is not None:
+                self.change_password = True
+                self.passwd_command = True
+                self.username = response[1]
+                return 'continue'
+            response = ''
         elif isinstance(response, list):
             for line in response:
                 print(line)
@@ -211,7 +227,9 @@ class Console:
         settings = self.settings
         settings_window_ = settingsWindow.SettingsWindow()
         window = settings_window_.create_new_window(window_num=str(self.settings_window_num),
-                                                    timezone=self.establish_timezone())
+                                                    timezone=self.establish_timezone(),
+                                                    current_user=self.establish_user_variables(check_active_user=True),
+                                                    save_folder=self.establish_save_folder())
         # Until the settings window isn't the active window
         active_window = self.get_active_window()
         try:
@@ -309,12 +327,18 @@ class Console:
 
                 window[f'command_prompt{self.suffix}'].update(self.establish_prompt_line())
                 window.bind('<F7>', f'reset_window_size_button{self.suffix}')
+
                 run_event_loop = True
                 while run_event_loop:
                     if self.main_window_num > 0 and reload_contents:
                         for line in self.window_controller.load_console_output():
                             print(line.rstrip())
                         reload_contents = False
+
+                    if self.change_password:
+                        print('New Password: ')
+                        self.change_password = False
+
 
                     event, values = window.read()
                     # print(event, values)
@@ -362,6 +386,9 @@ class Console:
                     elif event == f'load_input_button{self.suffix}':
                         command_arguments = values[f'command_arguments{self.suffix}']
                         print(command_arguments)
+                        if self.passwd_command:
+                            self.establish_user_variables(self.username, command_arguments, change_password=True)
+
                         response = self.execute_command(command_arguments)
                         if self.manage_response(command_arguments, response, window) == 'continue':
                             continue

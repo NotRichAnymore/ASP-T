@@ -298,8 +298,11 @@ class SettingsRepository:
         if error:
             self.logger.create_log_entry(level=logging.ERROR, message=f'Issue with Database: {error}')
 
-    def save_user_details(self, user_details):
-        self.sql.insert_into_users_table(user_details.get_username(), user_details.get_password())
+    def save_user_details(self, user_details, update=None):
+        if not update:
+            self.sql.insert_into_users_table(user_details.get_username(), user_details.get_password())
+        else:
+            self.sql.update_users_table(user_details.get_username(), user_details.get_password())
         return self.sql.get_last_entry()
 
     def get_all_users(self):

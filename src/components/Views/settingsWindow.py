@@ -240,7 +240,7 @@ class SettingsWindow:
         return sg.Window(title=self.get_title(), layout=self.build_layout(), size=(535, 500), no_titlebar=True,
                          grab_anywhere=True, keep_on_top=True, modal=True)
 
-    def create_new_window(self, window_num, timezone=None, new_theme=None):
+    def create_new_window(self, window_num, timezone=None, new_theme=None, current_user=None, save_folder=None):
         sg.theme(new_theme)
         suffix = '_' + window_num
         new_title = (self.get_title() + suffix)
@@ -262,7 +262,7 @@ class SettingsWindow:
 
         new_files_tab_layout = [
             [sg.Text('Save Folder: '),
-             sg.Input(default_text='', expand_x=True, key=f'save_folder_input{suffix}')],
+             sg.Input(default_text='' if save_folder is None else save_folder, expand_x=True, key=f'save_folder_input{suffix}')],
             [sg.Button('Select Folder', expand_x=True, key=f'select_folder_button{suffix}')]
         ]
         new_files_tab = sg.Tab('Files', new_files_tab_layout, key=f'files_tab{suffix}')
@@ -279,7 +279,7 @@ class SettingsWindow:
         new_system_tab = sg.Tab('System', layout=new_system_tab_layout, key=f'system_tab{suffix}')
 
         new_database_tab_layout = [
-            [sg.Text('Username: '), sg.Input(default_text='', expand_x=True, key=f'username_input{suffix}')],
+            [sg.Text('Username: '), sg.Input(default_text='' if current_user is None else current_user, expand_x=True, key=f'username_input{suffix}')],
             [sg.Text('Password: '), sg.Input(default_text='', expand_x=True, password_char='X',
                                              key=f'password_input{suffix}')],
             [sg.Button('Login with User Details', expand_x=True, key=f'login_user_button{suffix}')]

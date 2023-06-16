@@ -110,7 +110,20 @@ class SettingsService:
                 self.repository.establish_credential_variables(user_details, set_active_user=True)
                 return self.validator.validate_user_details(username, password, user_details)
 
-    def credential_handling(self, username, password, check_active_user=None):
+    def change_user_password(self, username, password):
+        hashed_password = hash_password(password)
+        if self.validator.validate_password(password, hashed_password):
+            user_details = self.repository.create_new_user_details(username, hashed_password)
+            last_entry = self.repository.save_user_details(user_details, update=True)
+            success = self.validator.validate_database_entry(last_entry[0], user_details)
+            if not success:
+                self.logger.create_log_entry(level=logging.ERROR, message='Unable to change password')
+
+            return success
+        else:
+            self.logger.create_log_entry(level=logging.ERROR, message='Password does not match encrypted password')
+
+    def credential_handling(self, username, password, check_active_user=None, change_password=None):
         if check_active_user:
             if username:
                 return self.validator.is_active_user(username, self.repository.get_active_user())
@@ -122,6 +135,9 @@ class SettingsService:
                 self.logger.create_log_entry(level=logging.CRITICAL, message='Initialising database')
             #  Credentials should have pre-defined format standard
             if self.validator.valid_credential_format(username, password):
+                if change_password:
+                    return self.change_user_password(username, password)
+
                 self.success = None
                 # If user not found start user creation processes
                 user_exists = self.repository.check_user_exists(username)

@@ -2,6 +2,7 @@ import logging
 
 from src.components.command.exceptions import InvalidCommandFormatError
 from src.components.Utilities.mySQLUtilities import MySQLUtilities
+from mysql.connector import Error
 import pysnooper
 import re
 from pathlib import Path
@@ -41,10 +42,10 @@ class CommandService:
                 return None
             case 'id':
                 try:
-                    self.sql = self.sql = MySQLUtilities(host='127.0.0.1',
-                                                         username='test_user',
-                                                         password='test_pass763',
-                                                         database='aspt')
+                    self.sql = MySQLUtilities(host='127.0.0.1',
+                                              username='test_user',
+                                              password='test_pass763',
+                                              database='aspt')
                 except Exception:
                     return 'unable to check id'
                 for token in tokens:
@@ -53,6 +54,48 @@ class CommandService:
                     for i in range(len(ids)):
                         if int(token) == ids[i][0] or token == users[i][0]:
                             return token
+            case 'passwd':
+                try:
+                    self.sql = MySQLUtilities(host='127.0.0.1',
+                                              username='test_user',
+                                              password='test_pass763',
+                                              database='aspt')
+                except Exception:
+                    return 'unable to change password'
+                username_valid = False
+                password_valid = False
+                max_length = False
+                user_details = []
+                users = self.sql.get_all_users()
+                users_length = len(users)
+                while not max_length or not (username_valid and password_valid):
+                    for token in tokens:
+                        for i in range(users_length):
+                            if i == users_length:
+                                max_length = True
+                                break
+
+                            if token in users[i][0]:
+                                user_details.append(token)
+                                username_valid = True
+
+                            if username_valid:
+                                try:
+                                    password = self.sql.query_user_details(user_details)[2][0]
+                                    if token in password:
+                                        user_details.append(token)
+                                        password_valid = True
+                                except Error:
+                                    continue
+
+                        if len(user_details) == 2:
+                            username_valid, password_valid = True, True
+                            break
+                        else:
+                            continue
+
+                return user_details if len(user_details) == 2 else None
+
 
     @staticmethod
     @pysnooper.snoop()
@@ -83,6 +126,8 @@ class CommandService:
                     if token in opt_format:
                         options.append(token)
                 return options
+            case 'passwd':
+                return None
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -158,6 +203,12 @@ class CommandService:
                         case 1:
                             return self.sql.get_id_by_username(uid[uid.index(self.command_args)])[0][0]
         return 'id not found'
+
+    def passwd_command(self, additional_details):
+        if not self.command_args[0] == additional_details[3]:
+            return None
+        return self.command_name, self.command_args
+
     @staticmethod
     @pysnooper.snoop()
     def set_variable_splitter(variable, datestr, lst):
@@ -175,12 +226,14 @@ class CommandService:
                 command.append(ele)
         self.command = command
 
-    def additional_requirements(self, tokens):
+    def additional_requirements(self):
         match self.command_name:
             case 'date':
                 self.remove_none_values()
                 return True
             case 'uptime':
+                return True
+            case 'passwd':
                 return True
         return False
 
@@ -203,7 +256,7 @@ class CommandService:
             self.sort_datetime_format(tokens)
         self.validator.validate_command(tokens, self.command_name, self.command_format)
         self.build(tokens)
-        return self.additional_requirements(tokens)
+        return self.additional_requirements()
 
     def execute_command(self, additional_details=None):
         match self.command_name:
@@ -223,6 +276,8 @@ class CommandService:
             case 'id':
                 self.remove_none_values()
                 return self.id_command()
+            case 'passwd':
+                return self.passwd_command(additional_details)
 
     def run_command(self, command_statement, additional_details):
         if not self.parse(command_statement.split(' ')):
