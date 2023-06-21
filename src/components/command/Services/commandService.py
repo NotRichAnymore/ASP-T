@@ -82,7 +82,7 @@ class CommandService:
                             if username_valid:
                                 try:
                                     password = self.sql.query_user_details(user_details)[2][0]
-                                    if token in password:
+                                    if self.validator.validate_password(token, password):
                                         user_details.append(token)
                                         password_valid = True
                                 except Error:
@@ -95,6 +95,11 @@ class CommandService:
                             continue
 
                 return user_details if len(user_details) == 2 else None
+            case 'ls':
+                for token in tokens:
+                    if self.validator.validate_path(token):
+                        return token
+
 
 
     @staticmethod
@@ -128,6 +133,11 @@ class CommandService:
                 return options
             case 'passwd':
                 return None
+            case 'ls':
+                for token in tokens:
+                    if token in opt_format:
+                        options.append(token)
+                return options
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -181,6 +191,21 @@ class CommandService:
                         return self.repository.set_datetime_format(self.datetime_format)
 
         return InvalidCommandFormatError(self.command_name, self.command_format)
+
+    def ls_command(self):
+        if len(self.command_opts) > 0:
+            match self.command_opts:
+                case '-a':
+                    return self.repository.get_directory_contents(self.command_args, show_hidden=True)
+                case '-l':
+                    return self.repository.get_directory_contents(self.command_args, directory_details=True)
+                case '-d':
+                    return self.repository.get_directory_contents(self.command_args, only_directory=True)
+                case '-t':
+                    return self.repository.get_directory_contents(self.command_args, modification_date=True)
+                case '-r':
+                    return self.repository.get_directory_contents(self.command_args, in_reverse=True)
+        return self.repository.get_directory_contents(self.command_args)
 
     def sleep_command(self):
         return self.command_name, self.command_args
@@ -278,6 +303,8 @@ class CommandService:
                 return self.id_command()
             case 'passwd':
                 return self.passwd_command(additional_details)
+            case 'ls':
+                return self.ls_command()
 
     def run_command(self, command_statement, additional_details):
         if not self.parse(command_statement.split(' ')):

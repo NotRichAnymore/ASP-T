@@ -1,5 +1,9 @@
+import base64
 import datetime
+
+import bcrypt
 import pysnooper
+from pathlib import Path
 from src.components.command.exceptions import InvalidCommandFormatError
 
 
@@ -38,3 +42,13 @@ class CommandValidator:
                 if len(tokens) != 1:
                     raise InvalidCommandFormatError(command_name, command_format)
 
+    def validate_password(self, password, hashed_password):
+        if not isinstance(password, bytes) :
+            password = base64.b64encode(bytes(password, 'utf-8'))
+        if not isinstance(hashed_password, bytes):
+            hashed_password = bytes(hashed_password, 'utf-8')
+        return bcrypt.checkpw(password, hashed_password)
+
+    def validate_path(self, path):
+        valid_path = Path(path).is_dir()
+        return False if not valid_path else True
