@@ -270,6 +270,24 @@ class CommandService:
                 self.datetime_format, tokens = self.set_variable_splitter('--format=', token, tokens)
             if token.startswith('--Set='):
                 self.datetime_format, tokens = self.set_variable_splitter('--Set=', token, tokens)
+    def sort_path(self, tokens, format):
+        occurance = 0
+        start = 0
+        end = 1
+        for token in tokens:
+            if "'" in token:
+                occurance += 1
+                if occurance == 1:
+                    start += tokens.index(token)
+                elif occurance == 2:
+                    end += tokens.index(token)
+
+        path = [tokens[0]] + [' '.join(tokens[start:end])[1:-1]]
+        for token in tokens:
+            if token in format:
+                path += [token]
+
+        return path
 
     def build(self, tokens):
         self.command_args = self.determine_command_arguments(self.command_name, self.command_format[1], tokens[1:])
@@ -279,8 +297,11 @@ class CommandService:
     def parse(self, tokens):
         self.command_format = self.establish_command_format(tokens[0])
         self.command_name = self.command_format[0]
-        if self.command_name == 'date':
-            self.sort_datetime_format(tokens)
+        match self.command_name:
+            case 'date':
+                self.sort_datetime_format(tokens)
+            case 'ls':
+                tokens = self.sort_path(tokens, self.command_format[2])
         self.validator.validate_command(tokens, self.command_name, self.command_format)
         self.build(tokens)
         return self.additional_requirements()
