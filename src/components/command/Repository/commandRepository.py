@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import time
-
+import re
 import pysnooper
 import pytz
 from pathlib import Path
@@ -115,50 +115,80 @@ class CommandRepository:
     def convert_mod_time_to_date(self, sorted_mod_time):
         return [time.ctime(mod_time) for mod_time in sorted_mod_time]
 
-    def get_directory_contents(self, path, show_hidden=False, only_directory=False,
-                               directory_details=False, modification_date=False, in_reverse=False):
+    def get_directory_details(self, path, dirnames):
+        details = []
+        for directory in dirnames:
+            dirpath = path + '/' + directory
+            try:
+                stat_result = os.stat_result(os.stat(dirpath))
+            except FileNotFoundError:
+                continue
+
+            owner = stat_result.st_uid
+            group = stat_result.st_gid
+            permissions = stat_result.st_mode
+            last_access = stat_result.st_atime
+            last_modification = stat_result.st_mtime
+            file_created = stat_result.st_ctime
+            # file_type = stat_result.st_type
+            file_size = stat_result.st_size / 1024
+
+            directory_details = f'{directory} ' \
+                                f'\nOwner: {owner}'\
+                                f'\nGroups: {group}'\
+                                f'\nPermissions: {permissions}'\
+                                f'\nLast Access: {last_access}'\
+                                f'\nLast Modification: {last_modification}' \
+                                f'\nFile Created At: {file_created}'\
+                                f'\nFile Size: {file_size} MB\n'
+            details.append(directory_details)
+
+        return details
+
+    def get_hidden_files(self, path, filenames):
+        hidden_files = []
+        for file in filenames:
+            filepath = path + '/' + file
+            if filepath.startswith('.') or self.has_hidden_attribute(filepath):
+                hidden_files.append(file)
+        return hidden_files
+
+    def get_modification_dates(self, path, filenames):
+        mod_time = []
+        for file in filenames:
+            filepath = path + '/' + file
+            mod_time.append(os.path.getmtime(filepath))
+        sorted_mod_time = self.sort_mod_time(mod_time)
+        sorted_mod_date = self.convert_mod_time_to_date(sorted_mod_time)
+        return [f'{file} {mod_date}' for file, mod_date in zip(filenames, sorted_mod_date)]
+
+    def get_reversed_directory_contents(self, filenames, dirnames):
+        reversed_files = [file for file in reversed(filenames)]
+        reversed_directories = [directory for directory in reversed(dirnames)]
+        return reversed_files + reversed_directories
+
+    def get_directory_contents(self, path, show_hidden=None, only_directory=None, directory_details=None,
+                               modification_date=None, in_reverse=None):
 
         dirnames, filenames = self.get_directory_and_filenames(path)
-        directory_contents = dirnames + [filenames.remove(file) for file in filenames if file.startswith('.')]
+        [filenames.remove(file) for file in filenames if re.match(r"^(\.[a-zA-z])|^(\.[0-9])", file)]
+        directory_contents = dirnames + filenames
 
         if only_directory:
             directory_contents = dirnames
 
         if directory_details:
-            details = []
-            for directory in dirnames:
-                stat_result = os.stat_result(os.stat(directory))
-                owner = stat_result.st_uid
-                group = stat_result.st_gid
-                permissions = stat_result.st_mode
-                last_access = stat_result.st_atime
-                last_modification = stat_result.st_mtime
-                file_created = stat_result.st_birthtime
-                file_type = stat_result.st_type
-                file_size = stat_result.st_size
-                details.append(f'Owner: {owner}, Groups: {group}, Permissions: {permissions}, '
-                               f'Last Access: {last_access}, Last Modification: {last_modification},'
-                               f'File Created At: {file_created}, File Type: {file_type}, File Size: {file_size}')
-            directory_contents += details
+            directory_contents = self.get_directory_details(path, dirnames)
 
         if show_hidden:
-            hidden_files = []
-            for file in filenames:
-                if file.startswith('.') or self.has_hidden_attribute(file):
-                    hidden_files.append(file)
-            directory_contents += hidden_files
+            directory_contents += self.get_hidden_files(path, filenames)
 
         if modification_date:
-            mod_time = []
-            for file in filenames:
-                mod_time.append(os.path.getmtime(file))
-            sorted_mod_time = self.sort_mod_time(mod_time)
-            sorted_mod_date = self.convert_mod_time_to_date(sorted_mod_time)
-            directory_contents += sorted_mod_date
+            directory_contents = self.get_modification_dates(path, filenames)
 
         if in_reverse:
-            reversed_contents = [(file, directory) for file, directory in zip(reversed(filenames), reversed(dirnames))]
-            directory_contents += reversed_contents
+            reversed_contents = self.get_reversed_directory_contents(filenames, dirnames)
+            directory_contents = reversed_contents
 
         return directory_contents
 

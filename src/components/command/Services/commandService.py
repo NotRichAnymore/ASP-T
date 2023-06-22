@@ -193,19 +193,21 @@ class CommandService:
         return InvalidCommandFormatError(self.command_name, self.command_format)
 
     def ls_command(self):
-        if len(self.command_opts) > 0:
-            match self.command_opts:
-                case '-a':
-                    return self.repository.get_directory_contents(self.command_args, show_hidden=True)
-                case '-l':
-                    return self.repository.get_directory_contents(self.command_args, directory_details=True)
-                case '-d':
-                    return self.repository.get_directory_contents(self.command_args, only_directory=True)
-                case '-t':
-                    return self.repository.get_directory_contents(self.command_args, modification_date=True)
-                case '-r':
-                    return self.repository.get_directory_contents(self.command_args, in_reverse=True)
-        return self.repository.get_directory_contents(self.command_args)
+        if len(self.command_opts) == 0:
+            return self.repository.get_directory_contents(self.command_args)
+
+        match self.command_opts:
+            case ['-a']:
+                return self.repository.get_directory_contents(self.command_args, show_hidden=True)
+            case ['-l']:
+                return self.repository.get_directory_contents(self.command_args, directory_details=True)
+            case ['-d']:
+                return self.repository.get_directory_contents(self.command_args, only_directory=True)
+            case ['-t']:
+                return self.repository.get_directory_contents(self.command_args, modification_date=True)
+            case ['-r']:
+                return self.repository.get_directory_contents(self.command_args, in_reverse=True)
+
 
     def sleep_command(self):
         return self.command_name, self.command_args
