@@ -193,21 +193,23 @@ class CommandService:
         return InvalidCommandFormatError(self.command_name, self.command_format)
 
     def ls_command(self):
+        directory_contents = None
         if len(self.command_opts) == 0:
-            return self.repository.get_directory_contents(self.command_args)
+            directory_contents = self.repository.get_directory_contents(self.command_args)
 
         match self.command_opts:
             case ['-a']:
-                return self.repository.get_directory_contents(self.command_args, show_hidden=True)
+                directory_contents = self.repository.get_directory_contents(self.command_args, show_hidden=True)
             case ['-l']:
-                return self.repository.get_directory_contents(self.command_args, directory_details=True)
+                directory_contents = self.repository.get_directory_contents(self.command_args, directory_details=True)
             case ['-d']:
-                return self.repository.get_directory_contents(self.command_args, only_directory=True)
+                directory_contents = self.repository.get_directory_contents(self.command_args, only_directory=True)
             case ['-t']:
-                return self.repository.get_directory_contents(self.command_args, modification_date=True)
+                directory_contents = self.repository.get_directory_contents(self.command_args, modification_date=True)
             case ['-r']:
-                return self.repository.get_directory_contents(self.command_args, in_reverse=True)
+                directory_contents = self.repository.get_directory_contents(self.command_args, in_reverse=True)
 
+        return self.command_name, directory_contents
 
     def sleep_command(self):
         return self.command_name, self.command_args
@@ -270,24 +272,35 @@ class CommandService:
                 self.datetime_format, tokens = self.set_variable_splitter('--format=', token, tokens)
             if token.startswith('--Set='):
                 self.datetime_format, tokens = self.set_variable_splitter('--Set=', token, tokens)
-    def sort_path(self, tokens, format):
+
+    @staticmethod
+    @pysnooper.snoop()
+    def sort_path(tokens, opt_format):
         occurance = 0
         start = 0
-        end = 1
+        end = 0
+
+        quote_present = False
         for token in tokens:
             if "'" in token:
+                quote_present = True
+
+        if quote_present:
+            for token in tokens:
                 occurance += 1
                 if occurance == 1:
                     start += tokens.index(token)
                 elif occurance == 2:
                     end += tokens.index(token)
 
-        path = [tokens[0]] + [' '.join(tokens[start:end])[1:-1]]
-        for token in tokens:
-            if token in format:
-                path += [token]
+            command = tokens[0]
+            path = [command] + [' '.join(tokens[start:end])[1:-1]]
+            for token in tokens:
+                if token in opt_format:
+                    path += [token]
+            return path
 
-        return path
+        return tokens
 
     def build(self, tokens):
         self.command_args = self.determine_command_arguments(self.command_name, self.command_format[1], tokens[1:])

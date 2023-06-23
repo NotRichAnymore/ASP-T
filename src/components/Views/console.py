@@ -65,7 +65,6 @@ class Console:
         # otherwise return the current theme
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting Current Theme')
         return self.theme
-
     
     def establish_save_folder(self, save_folder=None):
         if save_folder:
@@ -132,7 +131,7 @@ class Console:
                                  ]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
-    def manage_response(self, command_args, response, window):
+    def manage_response(self, command_args, response, window, suffix):
         if response is None:
             return 'continue'
         elif response == 'clear':
@@ -156,6 +155,23 @@ class Console:
                 self.username = response[1]
                 return 'continue'
             response = ''
+        elif response[0] == 'ls':
+            response = response[1:]
+            response = response[0]
+            for i in range(len(response)):
+                self.log_command(command_args, response[i]['data'], write=True)
+                match response[i]['type']:
+                    case "directory":
+                        for directory in response[i]['data']:
+                            window[f'output_screen{suffix}'].print(directory, text_color=response[i]['colour'])
+                    case "files":
+                        for file in response[i]['data']:
+                            window[f'output_screen{suffix}'].print(file, text_color=response[i]['colour'])
+                    case "hidden_files":
+                        for hidden_file in response[i]['data']:
+                            if response[i]['data'] != '':
+                                window[f'output_screen{suffix}'].print(hidden_file, text_color=response[i]['colour'])
+            return 'continue'
         elif isinstance(response, list):
             for line in response:
                 print(line)
@@ -390,7 +406,7 @@ class Console:
                             self.establish_user_variables(self.username, command_arguments, change_password=True)
 
                         response = self.execute_command(command_arguments)
-                        if self.manage_response(command_arguments, response, window) == 'continue':
+                        if self.manage_response(command_arguments, response, window, self.suffix) == 'continue':
                             continue
                     if not run_event_loop:
                         break
