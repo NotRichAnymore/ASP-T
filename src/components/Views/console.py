@@ -131,54 +131,59 @@ class Console:
                                  ]
         return self.command_controller.execute_command(command_arguments, additional_parameters)
 
-    def manage_response(self, command_args, response, window, suffix):
-        if response is None:
-            return 'continue'
-        elif response == 'clear':
-            window[f'output_screen{self.suffix}'].update(' ')
-        elif is_iterable(response) and response[0] == 'date':
-            response = self.establish_datetime_format(response[1])
-        elif is_iterable(response) and response[0] == 'sleep':
-            self.log_command(command_args)
-            self.system_sleep(response[1])
-            response = ''
-        elif response == 'history':
-            for line in self.log_command(command_args, response, read=True):
-                print(line)
-            return 'continue'
-        elif response == 'id':
-            response = self.establish_user_variables(check_active_user=True)
-        elif is_iterable(response) and response[0] == 'passwd':
-            if response[1] is not None:
-                self.change_password = True
-                self.passwd_command = True
-                self.username = response[1]
+    def manage_response(self, command_args, response, window):
+        try:
+            if response is None:
                 return 'continue'
-            response = ''
-        elif response[0] == 'ls':
-            response = response[1:]
-            response = response[0]
-            for i in range(len(response)):
-                self.log_command(command_args, response[i]['data'], write=True)
-                match response[i]['type']:
-                    case "directory":
-                        for directory in response[i]['data']:
-                            window[f'output_screen{suffix}'].print(directory, text_color=response[i]['colour'])
-                    case "files":
-                        for file in response[i]['data']:
-                            window[f'output_screen{suffix}'].print(file, text_color=response[i]['colour'])
-                    case "hidden_files":
-                        for hidden_file in response[i]['data']:
-                            if response[i]['data'] != '':
-                                window[f'output_screen{suffix}'].print(hidden_file, text_color=response[i]['colour'])
-            return 'continue'
-        elif isinstance(response, list):
-            for line in response:
-                print(line)
-            return 'continue'
-        self.log_command(command_args, response, write=True)
-        print(response)
-        print('\n')
+            elif response == 'clear':
+                window[f'output_screen{self.suffix}'].update(' ')
+            elif is_iterable(response) and response[0] == 'date':
+                response = self.establish_datetime_format(response[1])
+            elif is_iterable(response) and response[0] == 'sleep':
+                self.log_command(command_args)
+                self.system_sleep(response[1])
+                response = ''
+            elif response == 'history':
+                jsonObject = self.log_command(read=True)
+                for obj in jsonObject:
+                    window[f'output_screen{self.suffix}'].print("Input: ", obj['Input'], text_color='Green')
+                    window[f'output_screen{self.suffix}'].print("Output: ", obj['Output'], text_color='Dark Red')
+                return 'continue'
+            elif response == 'id':
+                response = self.establish_user_variables(check_active_user=True)
+            elif is_iterable(response) and response[0] == 'passwd':
+                if response[1] is not None:
+                    self.change_password = True
+                    self.passwd_command = True
+                    self.username = response[1]
+                    return 'continue'
+                response = ''
+            elif response[0] == 'ls':
+                response = response[1:]
+                response = response[0]
+                for i in range(len(response)):
+                    self.log_command(command_args, response[i]['data'], write=True)
+                    match response[i]['type']:
+                        case "directory":
+                            for directory in response[i]['data']:
+                                window[f'output_screen{self.suffix}'].print(directory, text_color=response[i]['colour'])
+                        case "files":
+                            for file in response[i]['data']:
+                                window[f'output_screen{self.suffix}'].print(file, text_color=response[i]['colour'])
+                        case "hidden_files":
+                            for hidden_file in response[i]['data']:
+                                if response[i]['data'] != '':
+                                    window[f'output_screen{self.suffix}'].print(hidden_file, text_color=response[i]['colour'])
+                return 'continue'
+            elif isinstance(response, list):
+                for line in response:
+                    print(line)
+                return 'continue'
+            self.log_command(command_args, response, write=True)
+            print(response)
+            print('\n')
+        except Exception:
+            print(f"'{command_args}' cannot be recognised as a valid command")
 
     def establish_datetime_format(self, fmt=None):
         if not fmt:
@@ -196,7 +201,7 @@ class Console:
         return self.settings_controller.manage_runtime(startup, current)
 
     def log_command(self, command_args=None, response=None, write=None, read=None, startup=None):
-        command_response = f'Input: {command_args}\n Output: {response}'
+        command_response = [{"Input": command_args, "Output": response}]
         return self.command_controller.save_command_response(command_response,
                                                              self.establish_save_folder(),
                                                              write,
@@ -406,7 +411,7 @@ class Console:
                             self.establish_user_variables(self.username, command_arguments, change_password=True)
 
                         response = self.execute_command(command_arguments)
-                        if self.manage_response(command_arguments, response, window, self.suffix) == 'continue':
+                        if self.manage_response(command_arguments, response, window) == 'continue':
                             continue
                     if not run_event_loop:
                         break

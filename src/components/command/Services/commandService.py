@@ -347,18 +347,24 @@ class CommandService:
             return self.execute_command()
         return self.execute_command(additional_details)
 
-    def write_command_response(self, command_response, save_folder, clear_file=None):
-        save_path = Path(save_folder).joinpath('command_history.txt')
+    def write_command_response(self, save_folder, command_response=None, clear_file=None):
+        save_path = Path(save_folder).joinpath('command_history.json')
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Using {save_path}')
+
+
+
+        jsonObj = self.read_command_history(save_folder)
         mode = 'a+'
         if clear_file:
-            mode = 'w+'
-        with open(save_path, mode) as output_file:
-            output_file.writelines(command_response + '\n')
-            self.logger.create_log_entry(level=logging.DEBUG, message=f'Command Response written to {save_path}')
+            self.repository.clear_file(save_path)
+            self.repository.write_json_object_to_file(save_path, 'w+', command_response)
+        else:
+            if len(jsonObj[0]) == 0:
+                self.repository.write_json_object_to_file(save_path, mode, command_response)
+            self.repository.append_json_object_to_file(save_path, command_response)
+        self.logger.create_log_entry(level=logging.DEBUG, message=f'Command Response written to {save_path}')
 
     def read_command_history(self, save_folder):
-        save_path = Path(save_folder).joinpath('command_history.txt')
+        save_path = Path(save_folder).joinpath('command_history.json')
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Reading from {save_path}')
-        with open(save_path, 'r') as output_file:
-            return output_file.readlines()
+        return self.repository.read_json_object_from_file(save_path)

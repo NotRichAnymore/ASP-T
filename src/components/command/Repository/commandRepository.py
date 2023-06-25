@@ -210,4 +210,21 @@ class CommandRepository:
 
         return directory_contents
 
+    def write_json_object_to_file(self, save_path, file_mode, obj):
+        with open(save_path, file_mode) as json_file:
+            json.dump(obj, json_file)
+
+    def read_json_object_from_file(self, save_path):
+        with open(save_path, 'r') as json_file:
+            return json.load(json_file)
+
+    def append_json_object_to_file(self, save_path, command_response):
+        jsonObj = self.read_json_object_from_file(save_path)
+        jsonObj.append(command_response[0])
+        with open(save_path, 'w') as json_file:
+            json.dump(jsonObj, json_file)
+
+    def clear_file(self, save_path):
+        with open(save_path, 'w') as json_file:
+            pass
 

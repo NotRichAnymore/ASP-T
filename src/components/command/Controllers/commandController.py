@@ -14,11 +14,11 @@ class CommandController:
 
     def save_command_response(self, command_response, save_folder, write=None, read=None, startup=None):
         if write:
-            self.service.write_command_response(command_response, save_folder)
+            self.service.write_command_response(command_response=command_response, save_folder=save_folder)
         if read:
-            return self.service.read_command_history(save_folder)
+            return self.service.read_command_history(save_folder=save_folder)
         if startup:
-            self.service.write_command_response('', save_folder, clear_file=True)
+            self.service.write_command_response(command_response=command_response, save_folder=save_folder, clear_file=True)
 
 
 
