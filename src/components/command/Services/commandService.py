@@ -293,8 +293,8 @@ class CommandService:
 
         indices = []
         split_paths = []
-        starting_quote_regex = r"^('[a-zA-Z]+)(\:*)(\\+[a-zA-Z]+)*"
-        split_path_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+)*"
+        starting_quote_regex = r"^('[a-zA-Z]+\:+\\+)(\\*[a-zA-Z]*)*$"
+        split_path_regex = r"^[a-zA-Z]+\\+[a-zA-Z]+[^\']+$"
         ending_quote_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+)*(\.+[a-zA-Z]+)*('$)+"
         regexs = [starting_quote_regex, split_path_regex, ending_quote_regex]
 
@@ -356,9 +356,10 @@ class CommandService:
             # Based on if i is ending quote 
             # And it's preceded by a starting/middle quote or 
             # Followed by a starting quote
-            if i == 2 and (indices[i - 1] == 0 or indices[i - 1] == 1) \
+            prev_index = indices[indices.index(i) - 1]
+            if i == 2 and (prev_index == 0 or prev_index == 1) \
                     or (indices[i + 1] == 0):
-                paths.append(' '.join(ordered_path))
+                paths.append(' '.join(ordered_path)[1:-1])
                 ordered_path = []
 
         path = [command] + paths
