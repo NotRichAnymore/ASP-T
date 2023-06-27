@@ -49,6 +49,12 @@ class CommandValidator:
             hashed_password = bytes(hashed_password, 'utf-8')
         return bcrypt.checkpw(password, hashed_password)
 
-    def validate_path(self, path):
+    def validate_directory(self, path):
         valid_path = Path(path).is_dir()
         return False if not valid_path else True
+
+    def validate_path(self, path):
+        try:
+            return True if Path(path).is_dir() or Path(path).is_file() else False
+        except FileNotFoundError:
+            return False

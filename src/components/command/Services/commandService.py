@@ -7,6 +7,7 @@ import pysnooper
 import re
 from pathlib import Path
 
+
 @pysnooper.snoop()
 class CommandService:
     def __init__(self, repo, validator, logger):
@@ -25,6 +26,7 @@ class CommandService:
         return self.repository.get_command_format(command)
 
     def determine_command_arguments(self, command, arg_format, tokens):
+        args = []
         match command:
             case 'help':
                 for token in tokens:
@@ -97,15 +99,23 @@ class CommandService:
                 return user_details if len(user_details) == 2 else None
             case 'ls':
                 for token in tokens:
-                    if self.validator.validate_path(token):
+                    if self.validator.validate_directory(token):
                         return token
+            case 'cp':
+                for token in tokens:
+                    if self.validator.validate_path(token):
+                        args.append(token)
+                    return args
 
-
-
-    @staticmethod
-    @pysnooper.snoop()
-    def determine_command_options(command, opt_format, tokens):
+    def get_options_from_format(self, opt_format, tokens):
         options = []
+        for token in tokens:
+            if token in opt_format:
+                options.append(token)
+        return options
+
+    @pysnooper.snoop()
+    def determine_command_options(self, command, opt_format, tokens):
         match command:
             case 'help':
                 pass
@@ -116,10 +126,7 @@ class CommandService:
             case 'date':
                 if len(tokens) == 0:
                     return None
-                for token in tokens:
-                    if token in opt_format:
-                        options.append(token)
-                return options
+                return self.get_options_from_format(opt_format, tokens)
             case 'sleep':
                 return None
             case 'uptime':
@@ -127,17 +134,13 @@ class CommandService:
             case 'id':
                 if len(tokens) == 0:
                     return None
-                for token in tokens:
-                    if token in opt_format:
-                        options.append(token)
-                return options
+                return self.get_options_from_format(opt_format, tokens)
             case 'passwd':
                 return None
             case 'ls':
-                for token in tokens:
-                    if token in opt_format:
-                        options.append(token)
-                return options
+                return self.get_options_from_format(opt_format, tokens)
+            case 'cp':
+                return self.get_options_from_format(opt_format, tokens)
 
     def help_command(self):
         jsonObject = self.repository.get_all_help_command_details()
@@ -192,25 +195,6 @@ class CommandService:
 
         return InvalidCommandFormatError(self.command_name, self.command_format)
 
-    def ls_command(self):
-        directory_contents = None
-        if len(self.command_opts) == 0:
-            directory_contents = self.repository.get_directory_contents(self.command_args)
-
-        match self.command_opts:
-            case ['-a']:
-                directory_contents = self.repository.get_directory_contents(self.command_args, show_hidden=True)
-            case ['-l']:
-                directory_contents = self.repository.get_directory_contents(self.command_args, directory_details=True)
-            case ['-d']:
-                directory_contents = self.repository.get_directory_contents(self.command_args, only_directory=True)
-            case ['-t']:
-                directory_contents = self.repository.get_directory_contents(self.command_args, modification_date=True)
-            case ['-r']:
-                directory_contents = self.repository.get_directory_contents(self.command_args, in_reverse=True)
-
-        return self.command_name, directory_contents
-
     def sleep_command(self):
         return self.command_name, self.command_args
 
@@ -237,6 +221,28 @@ class CommandService:
         if not self.command_args[0] == additional_details[3]:
             return None
         return self.command_name, self.command_args
+
+    def ls_command(self):
+        directory_contents = None
+        if len(self.command_opts) == 0:
+            directory_contents = self.repository.get_directory_contents(self.command_args)
+
+        match self.command_opts:
+            case ['-a']:
+                directory_contents = self.repository.get_directory_contents(self.command_args, show_hidden=True)
+            case ['-l']:
+                directory_contents = self.repository.get_directory_contents(self.command_args, directory_details=True)
+            case ['-d']:
+                directory_contents = self.repository.get_directory_contents(self.command_args, only_directory=True)
+            case ['-t']:
+                directory_contents = self.repository.get_directory_contents(self.command_args, modification_date=True)
+            case ['-r']:
+                directory_contents = self.repository.get_directory_contents(self.command_args, in_reverse=True)
+
+        return self.command_name, directory_contents
+
+    def cp_command(self):
+        pass
 
     @staticmethod
     @pysnooper.snoop()
@@ -273,34 +279,93 @@ class CommandService:
             if token.startswith('--Set='):
                 self.datetime_format, tokens = self.set_variable_splitter('--Set=', token, tokens)
 
-    @staticmethod
-    @pysnooper.snoop()
-    def sort_path(tokens, opt_format):
-        occurance = 0
-        start = 0
-        end = 0
+    def sort_path(self, tokens, opt_format):
+        command = tokens[0]
+        tokens = tokens[1:]
 
-        quote_present = False
+        quote_present = None
         for token in tokens:
-            if "'" in token:
-                quote_present = True
+            if "'" not in token:
+                quote_present = False
 
-        if quote_present:
+            if quote_present is False:
+                return tokens
+
+        indices = []
+        split_paths = []
+        starting_quote_regex = r"^('[a-zA-Z]+)(\:*)(\\+[a-zA-Z]+)*"
+        split_path_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+)*"
+        ending_quote_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+)*(\.+[a-zA-Z]+)*('$)+"
+        regexs = [starting_quote_regex, split_path_regex, ending_quote_regex]
+
+        all_tokens_tried = False
+        all_regexes_tried = False
+        lists_same_length = False
+        main_loop = True
+
+        while main_loop:
+
+            token_tries = 0
             for token in tokens:
-                occurance += 1
-                if occurance == 1:
-                    start += tokens.index(token)
-                elif occurance == 2:
-                    end += tokens.index(token)
+                if token_tries == len(tokens) or all_tokens_tried or lists_same_length:
+                    main_loop = False
+                    break
 
-            command = tokens[0]
-            path = [command] + [' '.join(tokens[start:end])[1:-1]]
-            for token in tokens:
-                if token in opt_format:
-                    path += [token]
-            return path
+                regex_tries = 0
+                for regex in regexs:
+                    if regex_tries == len(regexs):
+                        all_regexes_tried = True
+                        break
 
-        return tokens
+                    if re.match(regex, token) and token not in split_paths:
+                        split_paths.append(token)
+                        indices.append(regexs.index(regex))
+
+                        if len(split_paths) and len(indices) == len(tokens):
+                            lists_same_length = True
+                            all_tokens_tried = True
+                            break
+
+                    regex_tries += 1
+
+                if all_regexes_tried:
+                    token_tries += 1
+                    continue
+
+            if not main_loop:
+                break
+
+        paths = []
+        ordered_path = []
+        j = 0
+
+        # Using indices to build the quoted path in correlating order
+        for i, p in zip(indices, split_paths):
+
+            if i == 0:
+                ordered_path.insert(0, p)
+                j += 1
+            elif i == 1:
+                ordered_path.insert(j, p)
+                j += 1
+            elif i == 2:
+                ordered_path.insert(len(ordered_path) + 1, p)
+                j = 0
+                
+            # Add each ordered_path as a joined string to list
+            # Based on if i is ending quote 
+            # And it's preceded by a starting/middle quote or 
+            # Followed by a starting quote
+            if i == 2 and (indices[i - 1] == 0 or indices[i - 1] == 1) \
+                    or (indices[i + 1] == 0):
+                paths.append(' '.join(ordered_path))
+                ordered_path = []
+
+        path = [command] + paths
+        for token in tokens:
+            if token in opt_format:
+                path += [token]
+        return path
 
     def build(self, tokens):
         self.command_args = self.determine_command_arguments(self.command_name, self.command_format[1], tokens[1:])
@@ -313,7 +378,7 @@ class CommandService:
         match self.command_name:
             case 'date':
                 self.sort_datetime_format(tokens)
-            case 'ls':
+            case 'ls' | 'cp':
                 tokens = self.sort_path(tokens, self.command_format[2])
         self.validator.validate_command(tokens, self.command_name, self.command_format)
         self.build(tokens)
@@ -341,6 +406,8 @@ class CommandService:
                 return self.passwd_command(additional_details)
             case 'ls':
                 return self.ls_command()
+            case 'cp':
+                return self.cp_command()
 
     def run_command(self, command_statement, additional_details):
         if not self.parse(command_statement.split(' ')):
@@ -350,8 +417,6 @@ class CommandService:
     def write_command_response(self, save_folder, command_response=None, clear_file=None):
         save_path = Path(save_folder).joinpath('command_history.json')
         self.logger.create_log_entry(level=logging.DEBUG, message=f'Using {save_path}')
-
-
 
         jsonObj = self.read_command_history(save_folder)
         mode = 'a+'

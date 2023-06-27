@@ -126,9 +126,9 @@ class CommandRepository:
             owner = stat_result.st_uid
             group = stat_result.st_gid
             permissions = stat_result.st_mode
-            last_access = stat_result.st_atime
-            last_modification = stat_result.st_mtime
-            file_created = stat_result.st_ctime
+            last_access = datetime.datetime.fromtimestamp(stat_result.st_atime).strftime('%Y-%m-%d %H:%M')
+            last_modification = datetime.datetime.fromtimestamp(stat_result.st_mtime).strftime('%Y-%m-%d %H:%M')
+            file_created = datetime.datetime.fromtimestamp(stat_result.st_ctime).strftime('%Y-%m-%d %H:%M')
             # file_type = stat_result.st_type
             file_size = stat_result.st_size / 1024
 
