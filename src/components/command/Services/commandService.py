@@ -283,19 +283,19 @@ class CommandService:
         command = tokens[0]
         tokens = tokens[1:]
 
-        quote_present = None
+        quote_present = False
         for token in tokens:
-            if "'" not in token:
-                quote_present = False
+            if "'" in token:
+                quote_present = True
 
-            if quote_present is False:
-                return tokens
+        if quote_present is False:
+            return tokens
 
         indices = []
         split_paths = []
         starting_quote_regex = r"^('[a-zA-Z]+\:+\\+)(\\*[a-zA-Z]*)*$"
         split_path_regex = r"^[a-zA-Z]+\\+[a-zA-Z]+[^\']+$"
-        ending_quote_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+)*(\.+[a-zA-Z]+)*('$)+"
+        ending_quote_regex = r"^([a-zA-Z]+)(\\+[a-zA-Z]+\d*)*(\.+[a-zA-Z]+)*('$)+"
         regexs = [starting_quote_regex, split_path_regex, ending_quote_regex]
 
         all_tokens_tried = False
@@ -307,30 +307,40 @@ class CommandService:
 
             token_tries = 0
             for token in tokens:
-                if token_tries == len(tokens) or all_tokens_tried or lists_same_length:
-                    main_loop = False
-                    break
+                # 'Starting loop'
 
                 regex_tries = 0
                 for regex in regexs:
-                    if regex_tries == len(regexs):
-                        all_regexes_tried = True
-                        break
-
+                    # 'Trying regex (tries', regex_tries, ')'
+                    # f'Does {regex} work for {token}?')
                     if re.match(regex, token) and token not in split_paths:
+                        # f'Yes, adding {token} to paths')
                         split_paths.append(token)
+                        # f'Also adding {regexs.index(regex)} to indices'
                         indices.append(regexs.index(regex))
 
-                        if len(split_paths) and len(indices) == len(tokens):
+                        # len(split_paths), len(indices))
+                        if (len(split_paths) and len(indices)) == len(tokens):
                             lists_same_length = True
                             all_tokens_tried = True
+                            # 'path order gained'
                             break
 
                     regex_tries += 1
+                    # f'advancing regex tries to {regex_tries}'
+                    if regex_tries == len(regexs):
+                        all_regexes_tried = True
+                        # 'All regexes Tried'
+                        break
 
                 if all_regexes_tried:
                     token_tries += 1
-                    continue
+                    # f'token tried {token_tries} times'
+
+                    if token_tries == len(tokens) or all_tokens_tried or lists_same_length:
+                        # f'all tokens tried = {all_tokens_tried} or lists are same length = {lists_same_length}'
+                        main_loop = False
+                        break
 
             if not main_loop:
                 break
