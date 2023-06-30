@@ -241,8 +241,76 @@ class CommandService:
 
         return self.command_name, directory_contents
 
+    def get_cp_options(self):
+        backup = None
+        debug = None
+        force = None
+        no_clobber = None
+        recursive = None
+        remove_dest = None
+        suffix = None
+        target_directory = None
+        no_target_directory = None
+        verbose = None
+
+        match self.command_opts:
+            case ['-b'] | ['--backup']:
+                backup = True
+            case ['--debug']:
+                debug = True
+            case ['-f'] | ['--force']:
+                force = True
+            case ['-n'] | ['--no-clobber']:
+                no_clobber = True
+            case ['r'] | ['-R'] | ['--recursive']:
+                recursive = True
+            case ['--remove-destination']:
+                remove_dest = True
+            case ['-S'] | ['--Suffix=']:
+                suffix = True
+            case ['t'] | ['--target-directory=']:
+                target_directory = True
+            case ['-T'] | ['--no-target-directory']:
+                no_target_directory = True
+            case ['-v'] | ['--verbose']:
+                verbose = True
+
+        return backup, debug, force, no_clobber, recursive, remove_dest, \
+            suffix, target_directory, no_target_directory, verbose
+
     def cp_command(self):
-        pass
+        copy_success = None
+        src_path = self.command_args[0]
+        dest_path = self.command_args[1]
+
+        backup, debug, force, no_clobber, recursive, remove_dest, \
+            suffix, target_directory, no_target_directory, verbose = self.get_cp_options()
+
+        match self.validator.check_path_type(self.command_args):
+            case ('file', 'file'):
+                copy_success = self.repository.copy_path(src_path, dest_path, file_to_file=True,
+                                                         backup=backup, debug=debug, force=force, no_clobber=no_clobber,
+                                                         recursive=recursive, remove_dest=remove_dest, suffix=suffix,
+                                                         target_directory=target_directory,
+                                                         no_target_directory=no_target_directory, verbose=verbose)
+            case ('file', 'directory'):
+                copy_success = self.repository.copy_path(src_path, dest_path, file_to_directory=True,
+                                                         backup=backup, debug=debug, force=force, no_clobber=no_clobber,
+                                                         recursive=recursive, remove_dest=remove_dest, suffix=suffix,
+                                                         target_directory=target_directory,
+                                                         no_target_directory=no_target_directory, verbose=verbose
+                                                         )
+            case ('directory', 'directory'):
+                copy_success = self.repository.copy_path(src_path, dest_path, directory_to_directory=True,
+                                                         ackup=backup, debug=debug, force=force, no_clobber=no_clobber,
+                                                         recursive=recursive, remove_dest=remove_dest, suffix=suffix,
+                                                         target_directory=target_directory,
+                                                         no_target_directory=no_target_directory, verbose=verbose
+                                                         )
+            case ('directory', 'file'):
+                raise InvalidCommandFormatError(self.command_name, self.command_format)
+
+        return copy_success, src_path, dest_path
 
     @staticmethod
     @pysnooper.snoop()
@@ -279,18 +347,15 @@ class CommandService:
             if token.startswith('--Set='):
                 self.datetime_format, tokens = self.set_variable_splitter('--Set=', token, tokens)
 
-    def sort_path(self, tokens, opt_format):
-        command = tokens[0]
-        tokens = tokens[1:]
-
+    def has_single_quotes(self, tokens):
         quote_present = False
         for token in tokens:
             if "'" in token:
                 quote_present = True
 
-        if quote_present is False:
-            return tokens
+        return quote_present
 
+    def determine_path_order(self, tokens: list) -> tuple[list, list]:
         indices = []
         split_paths = []
         starting_quote_regex = r"^('[a-zA-Z]+\:+\\+)(\\*[a-zA-Z]*)*$"
@@ -345,6 +410,9 @@ class CommandService:
             if not main_loop:
                 break
 
+        return indices, split_paths
+
+    def build_path_from_indices(self, indices: list, split_paths: list) -> list:
         paths = []
         ordered_path = []
         j = 0
@@ -361,16 +429,28 @@ class CommandService:
             elif i == 2:
                 ordered_path.insert(len(ordered_path) + 1, p)
                 j = 0
-                
+
             # Add each ordered_path as a joined string to list
-            # Based on if i is ending quote 
-            # And it's preceded by a starting/middle quote or 
+            # Based on if i is ending quote
+            # And it's preceded by a starting/middle quote or
             # Followed by a starting quote
             prev_index = indices[indices.index(i) - 1]
             if i == 2 and (prev_index == 0 or prev_index == 1) \
                     or (indices[i + 1] == 0):
                 paths.append(' '.join(ordered_path)[1:-1])
                 ordered_path = []
+
+        return paths
+
+    def sort_path(self, tokens, opt_format):
+        command = tokens[0]
+        tokens = tokens[1:]
+
+        if not self.has_single_quotes(tokens):
+            return [command] + tokens
+
+        indices, split_paths = self.determine_path_order(tokens)
+        paths = self.build_path_from_indices(indices, split_paths)
 
         path = [command] + paths
         for token in tokens:

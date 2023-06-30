@@ -1,11 +1,12 @@
 import base64
 import datetime
+import re
 
 import bcrypt
 import pysnooper
 from pathlib import Path
 from src.components.command.exceptions import InvalidCommandFormatError
-
+import pathlib
 
 @pysnooper.snoop()
 class CommandValidator:
@@ -26,7 +27,7 @@ class CommandValidator:
             case 'help':
                 if len(tokens) != 2:
                     raise InvalidCommandFormatError(command_name, command_format)
-            case 'clear':
+            case 'clear' | 'history' | 'uptime':
                 if len(tokens) != 1:
                     raise InvalidCommandFormatError(command_name, command_format)
             case 'history':
@@ -38,9 +39,13 @@ class CommandValidator:
             case 'sleep':
                 if len(tokens) > 2:
                     raise InvalidCommandFormatError(command_name, command_format)
-            case 'uptime':
-                if len(tokens) != 1:
+            case 'ls':
+                if len(tokens) < 2 or len(tokens) > 3:
                     raise InvalidCommandFormatError(command_name, command_format)
+            case 'cp':
+                if len(tokens) < 3 or len(tokens) > 4:
+                    raise InvalidCommandFormatError(command_name, command_format)
+
 
     def validate_password(self, password, hashed_password):
         if not isinstance(password, bytes) :
@@ -53,8 +58,21 @@ class CommandValidator:
         valid_path = Path(path).is_dir()
         return False if not valid_path else True
 
+    def validate_file(self, path):
+        valid_path = Path(path).is_file()
+        return False if not valid_path else True
+
     def validate_path(self, path):
         try:
             return True if Path(path).is_dir() or Path(path).is_file() else False
         except FileNotFoundError:
             return False
+
+    def check_path_type(self, paths):
+        path_types = []
+        for path in paths:
+            if self.validate_directory(path):
+                path_types.append('directory')
+            elif self.validate_file(path):
+                path_types.append('file')
+        return path_types

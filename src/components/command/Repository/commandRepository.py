@@ -6,6 +6,10 @@ import time
 import re
 import pysnooper
 import pytz
+import shutil
+import tempfile
+import filecmp
+import fileinput
 from pathlib import Path
 from src.components.command.Models.Commands.commands import Command
 from src.components.Utilities.sqliteUtilities import SqliteUtilities
@@ -16,6 +20,10 @@ from src.components.Utilities.mySQLUtilities import MySQLUtilities
 class CommandRepository:
 
     def __init__(self):
+        self.backup_dir = None
+        self.dest_path = None
+        self.src_path = None
+        self.backup_file = None
         self.command = Command(None)
         self.initial_sql = SqliteUtilities()
         self.database_path = None
@@ -228,3 +236,111 @@ class CommandRepository:
         with open(save_path, 'w') as json_file:
             pass
 
+    def successful_backup(self, path=None, backup_file=None):
+        return filecmp.cmp((self.src_path if path is None else path),
+                           (self.backup_file.name if backup_file is None else backup_file))
+
+    def get_filepaths_from_directory(self):
+        paths = []
+        for (dirpath, dirnames, filenames) in os.walk(self.src_path):
+            for file in filenames:
+                paths.append(Path(dirpath).joinpath(file))
+        return paths
+
+    def create_backup(self):
+        _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' + Path(self.src_path).suffix))
+        self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
+                                                       newline='\n',
+                                                       suffix=_suffix,
+                                                       dir=Path(self.src_path).parent)
+
+        if Path(self.src_path).is_file():
+            _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' + Path(self.src_path).suffix))
+            self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
+                                                           newline='\n',
+                                                           suffix=_suffix,
+                                                           dir=Path(self.src_path).parent)
+            with open(self.src_path, 'r') as src_file:
+                for line in src_file:
+                    self.backup_file.write(line)
+
+            if Path(self.backup_file.name).exists():
+                return self.successful_backup()
+            return False
+
+        elif Path(self.src_path).is_dir():
+            backup_created = []
+            paths = self.get_filepaths_from_directory()
+            self.backup_dir = tempfile.TemporaryDirectory(dir=self.src_path)
+            for path in paths:
+                _suffix = str(Path('_' + Path(path).stem + '_backup' + Path(path).suffix))
+                backup_file = tempfile.NamedTemporaryFile(mode='w+',
+                                                          newline='\n',
+                                                          suffix=_suffix,
+                                                          dir=self.backup_dir.name)
+                with open(path, 'r') as src_file:
+                    for line in src_file:
+                        backup_file.write(line)
+
+                if Path(backup_file.name).exists():
+                    backup_created.append(True if self.successful_backup(path, self.backup_file.name) else False)
+
+            if len(paths) == len(backup_created) and False not in backup_created:
+                return True
+
+        return False
+
+    def close_backup(self):
+        if self.backup_file and Path(self.backup_files.name).exists():
+            self.backup_file.close()
+
+        if self.backup_dir and Path(self.backup_dir.name).exists():
+            self.backup_dir.cleanup()
+
+
+
+    def copy_path(self, src_path, dest_path,
+                  file_to_file=None, file_to_directory=None, directory_to_directory=None,
+                  backup=None, debug=None, force=None, no_clobber=None, recursive=None,
+                  remove_dest=None, suffix=None, target_directory=None, no_target_directory=None, verbose=None):
+
+        self.src_path = src_path
+        self.dest_path = dest_path
+        success = False
+
+        # variable: check file type
+        # variable: check if dest path is empty or has contents
+        # variable(s): check which options are True
+
+        same_file_type = True
+        src_file_type, dest_file_type = self.get_file_types(src_path, dest_path)
+        if Path(src_path).suffix != Path(dest_path).suffix:
+            same_file_type = False
+
+        has_contents = self.dest_has_contents(dest_path)
+
+        # Prepatory Options
+        if backup:
+            # create temp file of src
+            # delete before exit
+            if not self.create_backup():
+                return success
+
+        if no_target_directory and dest_path is None:
+            dest_path = src_path
+
+        # Main Functionality
+        if file_to_file:
+            # conditional: if empty read from src and write in dest
+            # conditional: if has contents depending on file type append to existing contents
+            # variable: check if contents from src are in contents from dest then return
+            pass
+
+        if file_to_directory:
+            pass
+
+        if directory_to_directory:
+            pass
+
+        self.close_backup()
+        return success
