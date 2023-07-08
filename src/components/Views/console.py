@@ -123,6 +123,21 @@ class Console:
         self.logger.create_log_entry(level=logging.CRITICAL, message='Getting prompt line')
         return self.prompt_line
 
+    def establish_datetime_format(self, fmt=None):
+        if not fmt:
+            return self.settings_controller.manage_datetime_format()
+        return self.settings_controller.manage_datetime_format(fmt)
+
+    def system_sleep(self, amount):
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program sleeping for {amount}')
+        if is_iterable(amount):
+            for ele in amount:
+                time.sleep(int(ele))
+        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program slept for {amount}')
+
+    def establish_runtime(self, startup=None, current=None):
+        return self.settings_controller.manage_runtime(startup, current)
+
     def execute_command(self, command_arguments):
         additional_parameters = [self.establish_timezone(),
                                  self.establish_datetime_format(),
@@ -137,20 +152,47 @@ class Console:
                 return 'continue'
             elif response == 'clear':
                 window[f'output_screen{self.suffix}'].update(' ')
-            elif is_iterable(response) and response[0] == 'date':
-                response = self.establish_datetime_format(response[1])
+                self.log_command(command_args, write=True)
+
+            elif response[0] == 'date':
+                match response[2]:
+                    case 'current':
+                        window[f'output_screen{self.suffix}'].print(response[1])
+                        self.log_command(command_args, response[1], write=True)
+                    case 'timezones':
+                        for line in response[1]:
+                            window[f'output_screen{self.suffix}'].print(line)
+                            self.log_command(command_args, line, write=True)
+                    case 'set time':
+                        window[f'output_screen{self.suffix}'].print(self.establish_datetime_format(response[1]))
+                        self.log_command(command_args, response[1], write=True)
+                return 'continue'
             elif is_iterable(response) and response[0] == 'sleep':
-                self.log_command(command_args)
+                self.log_command(command_args, response, write=True)
                 self.system_sleep(response[1])
                 response = ''
+
             elif response == 'history':
                 jsonObject = self.log_command(read=True)
                 for obj in jsonObject:
                     window[f'output_screen{self.suffix}'].print("Input: ", obj['Input'], text_color='Green')
                     window[f'output_screen{self.suffix}'].print("Output: ", obj['Output'], text_color='Dark Red')
                 return 'continue'
+
+            elif response[0] == 'log':
+                for i, line in zip(range(len(response[1])), response[1]):
+                    if i % 2:
+                        colour = 'Dark Blue'
+                    else:
+                        colour = 'Blue'
+                    window[f'output_screen{self.suffix}'].print(line, text_color=colour)
+                    self.log_command(command_args, line, write=True)
+                return 'continue'
+
             elif response == 'id':
                 response = self.establish_user_variables(check_active_user=True)
+                self.log_command(command_args, response, write=True)
+
             elif is_iterable(response) and response[0] == 'passwd':
                 if response[1] is not None:
                     self.change_password = True
@@ -158,6 +200,7 @@ class Console:
                     self.username = response[1]
                     return 'continue'
                 response = ''
+
             elif response[0] == 'ls':
                 response = response[1:]
                 response = response[0]
@@ -173,32 +216,35 @@ class Console:
                         case "hidden_files":
                             for hidden_file in response[i]['data']:
                                 if response[i]['data'] != '':
-                                    window[f'output_screen{self.suffix}'].print(hidden_file, text_color=response[i]['colour'])
+                                    window[f'output_screen{self.suffix}'].print(hidden_file,
+                                                                                text_color=response[i]['colour'])
                 return 'continue'
+
+            elif response[0] == 'cp':
+                response = response[1:]
+                if response[1]:
+                    copy_success = f'{response[0]} was copied to {response[2]} successfully'
+                    response = copy_success
+                    window[f'output_screen{self.suffix}'].print(copy_success, text_color='Green')
+                elif not response[1]:
+                    copy_fail = f'Failed to copy {response[0]} to {response[2]}'
+                    response = copy_fail
+                    window[f'output_screen{self.suffix}'].print(copy_fail, text_color='Dark Red')
+
+                self.log_command(command_args, response, write=True)
+                return 'continue'
+
             elif isinstance(response, list):
                 for line in response:
                     print(line)
+                    self.log_command(command_args, line, write=True)
                 return 'continue'
+
             self.log_command(command_args, response, write=True)
             print(response)
             print('\n')
         except Exception:
             print(f"'{command_args}' cannot be recognised as a valid command")
-
-    def establish_datetime_format(self, fmt=None):
-        if not fmt:
-            return self.settings_controller.manage_datetime_format()
-        return self.settings_controller.manage_datetime_format(fmt)
-
-    def system_sleep(self, amount):
-        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program sleeping for {amount}')
-        if is_iterable(amount):
-            for ele in amount:
-                time.sleep(int(ele))
-        self.logger.create_log_entry(level=logging.CRITICAL, message=f'Program slept for {amount}')
-
-    def establish_runtime(self, startup=None, current=None):
-        return self.settings_controller.manage_runtime(startup, current)
 
     def log_command(self, command_args=None, response=None, write=None, read=None, startup=None):
         command_response = [{"Input": command_args, "Output": response}]
@@ -351,6 +397,8 @@ class Console:
 
                 run_event_loop = True
                 while run_event_loop:
+                    self.logger.create_log_entry(level=logging.DEBUG, message='Starting Main Program')
+
                     if self.main_window_num > 0 and reload_contents:
                         for line in self.window_controller.load_console_output():
                             print(line.rstrip())

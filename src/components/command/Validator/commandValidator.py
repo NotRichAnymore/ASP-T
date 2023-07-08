@@ -1,17 +1,17 @@
 import base64
 import datetime
 import re
-
 import bcrypt
 import pysnooper
 from pathlib import Path
 from src.components.command.exceptions import InvalidCommandFormatError
-import pathlib
+from src.components.Utilities.custom_types import PathLike
 
 @pysnooper.snoop()
 class CommandValidator:
-    def __init__(self):
+    def __init__(self, logger):
         self.current_datetime = datetime.datetime.now()
+        self.logger = logger
 
     def validate_date_format(self, command_details, fmt: str):
         try:
@@ -48,7 +48,7 @@ class CommandValidator:
 
 
     def validate_password(self, password, hashed_password):
-        if not isinstance(password, bytes) :
+        if not isinstance(password, bytes):
             password = base64.b64encode(bytes(password, 'utf-8'))
         if not isinstance(hashed_password, bytes):
             hashed_password = bytes(hashed_password, 'utf-8')
@@ -68,11 +68,23 @@ class CommandValidator:
         except FileNotFoundError:
             return False
 
-    def check_path_type(self, paths):
+    def determine_types(self, paths):
         path_types = []
         for path in paths:
-            if self.validate_directory(path):
+            if self.validate_directory(path) or not Path(path).suffix:
                 path_types.append('directory')
-            elif self.validate_file(path):
+            elif self.validate_file(path) or Path(path).suffix:
                 path_types.append('file')
         return path_types
+
+    def check_path_type(self, paths):
+        return self.determine_types(paths)
+
+    def is_pathlike(self, string):
+        return True if isinstance(string, PathLike) else False
+
+
+
+
+
+

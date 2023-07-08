@@ -1,6 +1,7 @@
-import ctypes
+import more_itertools
 import datetime
 import json
+import logging
 import os
 import time
 import re
@@ -19,7 +20,7 @@ from src.components.Utilities.mySQLUtilities import MySQLUtilities
 @pysnooper.snoop()
 class CommandRepository:
 
-    def __init__(self):
+    def __init__(self, logger):
         self.backup_dir = None
         self.dest_path = None
         self.src_path = None
@@ -27,12 +28,15 @@ class CommandRepository:
         self.command = Command(None)
         self.initial_sql = SqliteUtilities()
         self.database_path = None
+        self.logger = logger
         self.command_details_path = Path('src').resolve().parent.parent \
             .joinpath('data/files/command_details.json').as_posix()
         self.datetime_formats_path = Path('src').resolve().parent.parent \
             .joinpath('data/files/datetime_formats.json').as_posix()
         self.help_command_details_path = Path('src').resolve().parent.parent \
             .joinpath('data/files/help_command_details.json')
+        self.log_path = Path('src').resolve().parent.parent\
+            .joinpath('data/files/output.log')
 
     def create_command_object(self, command_name, command_arguments, command_options, command_type):
         return self.command.create_command_object(command_name, command_arguments, command_options, command_type)
@@ -84,7 +88,7 @@ class CommandRepository:
         return datetime.datetime.now().astimezone(timezone)
 
     def set_datetime_format(self, fmt):
-        return 'date', fmt
+        return fmt
 
     @staticmethod
     def get_global_datetimes(fmt=None):
@@ -247,15 +251,17 @@ class CommandRepository:
                 paths.append(Path(dirpath).joinpath(file))
         return paths
 
-    def create_backup(self):
-        _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' + Path(self.src_path).suffix))
+    def create_backup(self, defined_suffix):
+        _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' +
+                           (defined_suffix if defined_suffix else Path(self.src_path).suffix)))
         self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
                                                        newline='\n',
                                                        suffix=_suffix,
                                                        dir=Path(self.src_path).parent)
 
         if Path(self.src_path).is_file():
-            _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' + Path(self.src_path).suffix))
+            _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' +
+                               (defined_suffix if defined_suffix else Path(self.src_path).suffix)))
             self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
                                                            newline='\n',
                                                            suffix=_suffix,
@@ -273,7 +279,8 @@ class CommandRepository:
             paths = self.get_filepaths_from_directory()
             self.backup_dir = tempfile.TemporaryDirectory(dir=self.src_path)
             for path in paths:
-                _suffix = str(Path('_' + Path(path).stem + '_backup' + Path(path).suffix))
+                _suffix = str(Path('_' + Path(path).stem + '_backup' +
+                                   (defined_suffix if defined_suffix else Path(self.src_path).suffix)))
                 backup_file = tempfile.NamedTemporaryFile(mode='w+',
                                                           newline='\n',
                                                           suffix=_suffix,
@@ -297,50 +304,166 @@ class CommandRepository:
         if self.backup_dir and Path(self.backup_dir.name).exists():
             self.backup_dir.cleanup()
 
-
-
-    def copy_path(self, src_path, dest_path,
+    def copy_path(self, src_path, dest_path, overwrite_existing_file=None, defined_target_directory=None,
                   file_to_file=None, file_to_directory=None, directory_to_directory=None,
-                  backup=None, debug=None, force=None, no_clobber=None, recursive=None,
+                  backup=None, force=None, no_clobber=None, recursive=None,
                   remove_dest=None, suffix=None, target_directory=None, no_target_directory=None, verbose=None):
 
-        self.src_path = src_path
-        self.dest_path = dest_path
-        success = False
+        self.src_path = str(src_path)
+        self.dest_path = str(dest_path) \
+            if not (target_directory and defined_target_directory) else defined_target_directory
 
         # variable: check file type
         # variable: check if dest path is empty or has contents
         # variable(s): check which options are True
 
-        same_file_type = True
-        src_file_type, dest_file_type = self.get_file_types(src_path, dest_path)
-        if Path(src_path).suffix != Path(dest_path).suffix:
-            same_file_type = False
+        # same_file_type = True
+        # src_file_type, dest_file_type = self.get_file_types(src_path, dest_path)
+        # if Path(src_path).suffix != Path(dest_path).suffix:
+        #    same_file_type = False
 
-        has_contents = self.dest_has_contents(dest_path)
+        has_contents = self.has_contents()
 
         # Prepatory Options
-        if backup:
+        if backup and not no_clobber:
             # create temp file of src
             # delete before exit
-            if not self.create_backup():
-                return success
+            if not self.create_backup(suffix):
+                return False
 
-        if no_target_directory and dest_path is None:
-            dest_path = src_path
+        if no_target_directory and dest_path is None and not target_directory:
+            self.dest_path = src_path
 
-        # Main Functionality
-        if file_to_file:
-            # conditional: if empty read from src and write in dest
-            # conditional: if has contents depending on file type append to existing contents
-            # variable: check if contents from src are in contents from dest then return
-            pass
+        copy_attempted = False
+        while not copy_attempted:
+            # Main Functionality
+            if file_to_file:
+                # conditional: if empty read from src and write in dest
+                # variable: check if contents from src are in contents from dest then return
+                if not has_contents:
+                    self.copy_file_to_file(force, no_clobber,
+                                           remove_dest, verbose)
+                    copy_attempted = True
+                else:
+                    return False
 
-        if file_to_directory:
-            pass
+            if file_to_directory:
+                if not self.file_exists_in_dir() and overwrite_existing_file:
+                    self.copy_file_to_dir(force, no_clobber, recursive,
+                                          remove_dest, verbose,
+                                          overwrite_existing_file=True)
+                    copy_attempted = True
 
-        if directory_to_directory:
-            pass
+            if directory_to_directory:
+                if not has_contents:
+                    self.copy_directory_to_directory(force, no_clobber, recursive,
+                                                     remove_dest, verbose,
+                                                     new=True)
+                else:
+                    self.copy_directory_to_directory(force, no_clobber, recursive,
+                                                     remove_dest, verbose,
+                                                     existing=True)
+                copy_attempted = True
 
-        self.close_backup()
-        return success
+            if copy_attempted:
+                break
+
+        if self.same_contents():
+            return True
+        return False
+
+    def same_contents(self):
+        return True if filecmp.cmp(self.src_path, self.dest_path) else False
+
+    def has_contents(self):
+        try:
+            stat_result = os.stat_result(os.stat(self.dest_path))
+            path_exists = Path(self.dest_path).exists()
+            if stat_result.st_size > 0 or path_exists:
+                return True
+            return False
+        except (FileNotFoundError, OSError):
+            return False
+
+    def copy_file_to_file(self, force, no_clobber, remove_dest, verbose):
+
+        if not (force and no_clobber and remove_dest and verbose):
+            shutil.copyfile(src=self.src_path, dst=self.dest_path)
+
+        if not verbose:
+            self.logger = None
+        else:
+            self.logger = self.logger
+
+        if force and not no_clobber:
+            self.logger(level=logging.DEBUG, message='Using --force option')
+            while True:
+                try:
+                    if Path(self.dest_path).exists():
+                        self.logger(level=logging.DEBUG, message='dest file exists ')
+                        raise FileExistsError
+
+                    self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                    copy_address = shutil.copyfile(src=self.src_path, dst=self.dest_path)
+                    if copy_address == self.dest_path:
+                        self.logger(level=logging.DEBUG, message='Copy successful')
+                        break
+                except (PermissionError, FileExistsError):
+                    with open(self.dest_path, 'r') as dst:
+                        self.logger(level=logging.DEBUG, message='Getting dest contents')
+                        dst_contents = dst.readlines()
+                    self.logger(level=logging.DEBUG, message='Removing dest')
+                    os.remove(self.dest_path)
+                    with open(self.dest_path, 'w') as dst:
+                        self.logger(level=logging.DEBUG, message='Recreating dest + contents')
+                        for line in dst_contents:
+                            dst.write(line)
+                    continue
+                except shutil.SameFileError:
+                    self.logger(level=logging.DEBUG, message='Cannot copy the file to itself')
+                    break
+
+        elif no_clobber:
+            self.logger(level=logging.DEBUG, message='Using --no-clobber option')
+            copied_attempt = False
+            while not copied_attempt:
+                try:
+                    if Path(self.dest_path).exists() and remove_dest:
+                        self.logger(level=logging.DEBUG, message='removing destination')
+                        os.remove(self.dest_path)
+
+                    self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                    copy_address = shutil.copyfile(src=self.src_path, dst=self.dest_path)
+                    self.logger(level=logging.DEBUG, message='Copy successful')
+                    copied_attempt = True
+                except FileExistsError:
+                    continue
+
+
+    def get_log_file_contents(self, datestr=None, line_num=None, all_lines=None,
+                              from_date=None, program_setup=None, last=None):
+
+        with open(self.log_path, 'r') as log_file:
+            if all_lines:
+                return log_file.readlines()
+
+            if from_date and datestr:
+                lines = log_file.readlines()
+                for line in lines:
+                    if datestr in line:
+                        return lines[lines.index(line):]
+
+            if program_setup:
+                lines = log_file.readlines()
+                for line in lines:
+                    if 'Starting Program Setup' in line:
+                        start = lines.index(line)
+                    elif 'Ending Program Setup' in line:
+                        end = lines.index(line)
+
+                return lines[start:end]
+
+            if last and line_num:
+                lines_from_file = more_itertools.ilen(line for line in log_file.read())
+                lines_to_display = lines_from_file - (lines_from_file - line_num)
+                return log_file.readlines()[lines_to_display:]

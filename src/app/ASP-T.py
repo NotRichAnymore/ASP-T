@@ -26,8 +26,8 @@ def run_program():
     settings_service = SettingsService(settings_repo, settings_validator, logger)
     settings_controller = SettingsController(settings_service, logger)
 
-    command_repo = CommandRepository()
-    command_validator = CommandValidator()
+    command_repo = CommandRepository(logger)
+    command_validator = CommandValidator(logger)
     command_service = CommandService(command_repo, command_validator, logger)
     command_controller = CommandController(command_service)
 
