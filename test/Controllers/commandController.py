@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mock
 
-from src.components.command.Controllers.commandController import CommandController
+from components.command.commandController import CommandController
 
 
 

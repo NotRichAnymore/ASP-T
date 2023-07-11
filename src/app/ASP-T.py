@@ -1,19 +1,19 @@
 from src.components.Views.console import Console
 
-from src.components.command.Repository.commandRepository import CommandRepository
-from src.components.command.Validator.commandValidator import CommandValidator
-from src.components.command.Services.commandService import CommandService
-from src.components.command.Controllers.commandController import CommandController
+from components.command.commandRepository import CommandRepository
+from components.command.commandValidator import CommandValidator
+from components.command.commandService import CommandService
+from components.command.commandController import CommandController
 
-from src.components.window.Repository.windowRepository import WindowRepository
-from src.components.window.Validator.windowValidator import WindowValidator
-from src.components.window.Services.windowService import WindowService
-from src.components.window.Controllers.windowController import WindowController
+from components.window.windowRepository import WindowRepository
+from components.window.windowValidator import WindowValidator
+from components.window.windowService import WindowService
+from components.window.windowController import WindowController
 
-from src.components.settings.Repository.settingsRepository import SettingsRepository
-from src.components.settings.Validator.settingsValidator import SettingsValidator
-from src.components.settings.Services.settingsService import SettingsService
-from src.components.settings.Controllers.settingsController import SettingsController
+from components.settings.settingsRepository import SettingsRepository
+from components.settings.settingsValidator import SettingsValidator
+from components.settings.settingsService import SettingsService
+from components.settings.settingsController import SettingsController
 
 from src.components.Utilities.loggingUtilities import LoggingUtilities
 

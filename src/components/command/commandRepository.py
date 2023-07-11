@@ -10,11 +10,8 @@ import pytz
 import shutil
 import tempfile
 import filecmp
-import fileinput
 from pathlib import Path
 from src.components.command.Models.Commands.commands import Command
-from src.components.Utilities.sqliteUtilities import SqliteUtilities
-from src.components.Utilities.mySQLUtilities import MySQLUtilities
 
 
 @pysnooper.snoop()
@@ -26,7 +23,6 @@ class CommandRepository:
         self.src_path = None
         self.backup_file = None
         self.command = Command(None)
-        self.initial_sql = SqliteUtilities()
         self.database_path = None
         self.logger = logger
         self.command_details_path = Path('src').resolve().parent.parent \
@@ -35,7 +31,7 @@ class CommandRepository:
             .joinpath('data/files/datetime_formats.json').as_posix()
         self.help_command_details_path = Path('src').resolve().parent.parent \
             .joinpath('data/files/help_command_details.json')
-        self.log_path = Path('src').resolve().parent.parent\
+        self.log_path = Path('src').resolve().parent.parent \
             .joinpath('data/files/output.log')
 
     def create_command_object(self, command_name, command_arguments, command_options, command_type):
@@ -240,38 +236,37 @@ class CommandRepository:
         with open(save_path, 'w') as json_file:
             pass
 
-    def successful_backup(self, path=None, backup_file=None):
-        return filecmp.cmp((self.src_path if path is None else path),
-                           (self.backup_file.name if backup_file is None else backup_file))
-
-    def get_filepaths_from_directory(self):
+    def get_filepaths_from_directory(self, path=None):
         paths = []
-        for (dirpath, dirnames, filenames) in os.walk(self.src_path):
+        for (dirpath, dirnames, filenames) in os.walk(self.src_path if not path else path):
             for file in filenames:
                 paths.append(Path(dirpath).joinpath(file))
         return paths
 
+    def successful_backup(self, path=None, backup_file=None):
+        return filecmp.cmp(self.src_path if not path else path,
+                           self.backup_file.name if not backup_file else backup_file.name)
+
     def create_backup(self, defined_suffix):
         _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' +
                            (defined_suffix if defined_suffix else Path(self.src_path).suffix)))
-        self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
-                                                       newline='\n',
-                                                       suffix=_suffix,
-                                                       dir=Path(self.src_path).parent)
 
         if Path(self.src_path).is_file():
             _suffix = str(Path('_' + Path(self.src_path).stem + '_backup' +
                                (defined_suffix if defined_suffix else Path(self.src_path).suffix)))
-            self.backup_file = tempfile.NamedTemporaryFile(mode='w+',
-                                                           newline='\n',
-                                                           suffix=_suffix,
-                                                           dir=Path(self.src_path).parent)
+            backup_file = tempfile.NamedTemporaryFile(mode='w+',
+                                                      newline='\n',
+                                                      suffix=_suffix,
+                                                      dir=Path(self.src_path).parent,
+                                                      delete=False)
+
+            self.backup_file = backup_file
             with open(self.src_path, 'r') as src_file:
                 for line in src_file:
-                    self.backup_file.write(line)
+                    backup_file.write(line)
 
-            if Path(self.backup_file.name).exists():
-                return self.successful_backup()
+            if Path(backup_file.name).exists():
+                return self.successful_backup(backup_file=backup_file)
             return False
 
         elif Path(self.src_path).is_dir():
@@ -284,13 +279,14 @@ class CommandRepository:
                 backup_file = tempfile.NamedTemporaryFile(mode='w+',
                                                           newline='\n',
                                                           suffix=_suffix,
-                                                          dir=self.backup_dir.name)
+                                                          dir=self.backup_dir.name,
+                                                          delete=False)
                 with open(path, 'r') as src_file:
                     for line in src_file:
                         backup_file.write(line)
 
                 if Path(backup_file.name).exists():
-                    backup_created.append(True if self.successful_backup(path, self.backup_file.name) else False)
+                    backup_created.append(True if self.successful_backup(path, backup_file) else False)
 
             if len(paths) == len(backup_created) and False not in backup_created:
                 return True
@@ -298,9 +294,9 @@ class CommandRepository:
         return False
 
     def close_backup(self):
-        if self.backup_file and Path(self.backup_files.name).exists():
+        if self.backup_file and Path(self.backup_file.name).exists():
             self.backup_file.close()
-
+            del ()
         if self.backup_dir and Path(self.backup_dir.name).exists():
             self.backup_dir.cleanup()
 
@@ -329,10 +325,16 @@ class CommandRepository:
             # create temp file of src
             # delete before exit
             if not self.create_backup(suffix):
+                self.close_backup()
                 return False
 
         if no_target_directory and dest_path is None and not target_directory:
             self.dest_path = src_path
+
+        if not verbose:
+            self.logger = None
+        else:
+            self.logger = self.logger
 
         copy_attempted = False
         while not copy_attempted:
@@ -348,21 +350,17 @@ class CommandRepository:
                     return False
 
             if file_to_directory:
-                if not self.file_exists_in_dir() and overwrite_existing_file:
-                    self.copy_file_to_dir(force, no_clobber, recursive,
-                                          remove_dest, verbose,
-                                          overwrite_existing_file=True)
+                if not self.file_exists_in_dir() or overwrite_existing_file:
+                    self.copy_file_to_dir(force, no_clobber, recursive)
                     copy_attempted = True
 
             if directory_to_directory:
                 if not has_contents:
                     self.copy_directory_to_directory(force, no_clobber, recursive,
-                                                     remove_dest, verbose,
-                                                     new=True)
+                                                     remove_dest, new=True)
                 else:
                     self.copy_directory_to_directory(force, no_clobber, recursive,
-                                                     remove_dest, verbose,
-                                                     existing=True)
+                                                     remove_dest, existing=True)
                 copy_attempted = True
 
             if copy_attempted:
@@ -386,18 +384,16 @@ class CommandRepository:
             return False
 
     def copy_file_to_file(self, force, no_clobber, remove_dest, verbose):
+        
+        copy_attempted = False
+        while not copy_attempted:
+            if not (force and no_clobber and remove_dest and verbose):
+                shutil.copyfile(src=self.src_path, dst=self.dest_path)
+                copy_attempted = True
 
-        if not (force and no_clobber and remove_dest and verbose):
-            shutil.copyfile(src=self.src_path, dst=self.dest_path)
-
-        if not verbose:
-            self.logger = None
-        else:
-            self.logger = self.logger
-
-        if force and not no_clobber:
-            self.logger(level=logging.DEBUG, message='Using --force option')
-            while True:
+            tries = []
+            if force and not no_clobber:
+                self.logger(level=logging.DEBUG, message='Using --force option')
                 try:
                     if Path(self.dest_path).exists():
                         self.logger(level=logging.DEBUG, message='dest file exists ')
@@ -409,35 +405,165 @@ class CommandRepository:
                         self.logger(level=logging.DEBUG, message='Copy successful')
                         break
                 except (PermissionError, FileExistsError):
+                    if len(tries) > 3:
+                        break
+
                     with open(self.dest_path, 'r') as dst:
                         self.logger(level=logging.DEBUG, message='Getting dest contents')
                         dst_contents = dst.readlines()
                     self.logger(level=logging.DEBUG, message='Removing dest')
+
                     os.remove(self.dest_path)
                     with open(self.dest_path, 'w') as dst:
                         self.logger(level=logging.DEBUG, message='Recreating dest + contents')
                         for line in dst_contents:
                             dst.write(line)
+                    tries.append(copy_attempted)
                     continue
                 except shutil.SameFileError:
                     self.logger(level=logging.DEBUG, message='Cannot copy the file to itself')
                     break
-
-        elif no_clobber:
-            self.logger(level=logging.DEBUG, message='Using --no-clobber option')
-            copied_attempt = False
-            while not copied_attempt:
+    
+            elif no_clobber:
+                self.logger(level=logging.DEBUG, message='Using --no-clobber option')
                 try:
-                    if Path(self.dest_path).exists() and remove_dest:
-                        self.logger(level=logging.DEBUG, message='removing destination')
-                        os.remove(self.dest_path)
-
-                    self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
-                    copy_address = shutil.copyfile(src=self.src_path, dst=self.dest_path)
-                    self.logger(level=logging.DEBUG, message='Copy successful')
-                    copied_attempt = True
+                    if Path(self.dest_path).exists():
+                        if remove_dest:
+                            self.logger(level=logging.DEBUG, message='removing destination')
+                            os.remove(self.dest_path)
+                        else:
+                            self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                            with open(self.src_path, 'r') as src:
+                                with open(self.dest_path, 'a') as dst:
+                                    shutil.copyfileobj(fsrc=src, fdst=dst)
+                            self.logger(level=logging.DEBUG, message='Copy successful')
+                    copy_attempted = True
                 except FileExistsError:
+                    if len(tries) > 3:
+                        break
+                    tries += 1
+                    tries.append(copy_attempted)
                     continue
+
+    def file_exists_in_dir(self):
+        for file in os.listdir(self.dest_path):
+            if Path(self.src_path).name == file:
+                return True
+        return False
+
+    def copy_file_to_dir(self, force, no_clobber, verbose):
+
+        copy_attempted = False
+        while not copy_attempted:
+            if not (force and no_clobber and verbose):
+                shutil.copy(src=self.src_path, dst=self.dest_path)
+                copy_attempted = True
+
+            tries = 0
+            if force and not no_clobber:
+                self.logger(level=logging.DEBUG, message='Using --force option')
+                while True:
+                    try:
+                        if not Path(self.dest_path).exists():
+                            self.logger(level=logging.DEBUG, message='dest: directory does not exists ')
+                            raise FileNotFoundError
+
+                        self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                        copy_address = shutil.copy(src=self.src_path, dst=self.dest_path)
+                        if copy_address == self.dest_path:
+                            self.logger(level=logging.DEBUG, message='Copy successful')
+                            break
+                    except (PermissionError, FileNotFoundError):
+                        if tries > 3:
+                            break
+                        self.logger(level=logging.DEBUG, message='Creating dest: directory')
+                        os.mkdir(self.dest_path)
+                        tries += 1
+                        continue
+                    except shutil.Error:
+                        self.logger(level=logging.DEBUG, message='Issue copying file to directory')
+                        break
+
+            elif no_clobber:
+                self.logger(level=logging.DEBUG, message='Using --no-clobber option')
+                try:
+                    if Path(self.dest_path).exists():
+                        self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                        with open(self.src_path, 'r') as src:
+                            with open(self.dest_path, 'a') as dst:
+                                shutil.copyfileobj(fsrc=src, fdst=dst)
+                        self.logger(level=logging.DEBUG, message='Copy successful')
+                    copy_attempted = True
+                except FileExistsError:
+                    if tries > 3:
+                        break
+                    tries += 1
+                    continue
+
+    def copy_directory_to_directory(self, force, no_clobber, recursive,
+                                    remove_dest, new=None, existing=None):
+
+        status = (new or existing) if new or existing else None
+        copy_address = None
+        copy_attempted = False
+
+        tries = 0
+        while not copy_attempted:
+            try:
+                files = self.get_filepaths_from_directory(self.dest_path)
+
+                if remove_dest:
+                    for file in files:
+                        os.remove(file)
+                    remove_dest = False
+
+                if force and not no_clobber:
+                    self.logger(level=logging.DEBUG, message='Using --force option')
+                    for file in files:
+                        if not Path(file).exists():
+                            self.logger(level=logging.DEBUG, message='dest: directory does not exists ')
+                        raise FileNotFoundError
+
+                if no_clobber:
+                    self.logger(level=logging.DEBUG, message='Using --no-clobber option')
+                    if Path(self.dest_path).exists():
+                        self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
+                        with open(self.src_path, 'r') as src:
+                            with open(self.dest_path, 'a') as dst:
+                                shutil.copyfileobj(fsrc=src, fdst=dst)
+                        self.logger(level=logging.DEBUG, message='Copy successful')
+                    copy_attempted = True
+
+                match recursive:
+                    case True:
+                        self.logger(level=logging.DEBUG, message='Using --recursive option')
+                        copy_address = shutil.copytree(src=self.src_path, dst=self.dest_path, dirs_exist_ok=status)
+                        if self.dest_path == copy_address:
+                            self.logger(level=logging.DEBUG, message='Copy successful')
+                        copy_attempted = True
+
+                    case False:
+                        for file in files:
+                            shutil.copy(file, self.dest_path)
+                        copy_attempted = True
+
+                if copy_address == self.dest_path:
+                    self.logger(level=logging.DEBUG, message='Copy successful')
+                    break
+
+            except (FileExistsError, FileNotFoundError, PermissionError):
+                if FileExistsError:
+                    self.logger(level=logging.DEBUG, message='Directory already exists')
+                elif FileNotFoundError:
+                    self.logger(level=logging.DEBUG, message='Directory not found')
+                    os.mkdir(self.dest_path)
+                elif PermissionError:
+                    self.logger(level=logging.DEBUG, message='Creating dest: directory')
+                    os.mkdir(self.dest_path)
+                if tries > 3:
+                    break
+                tries += 1
+                continue
 
 
     def get_log_file_contents(self, datestr=None, line_num=None, all_lines=None,
