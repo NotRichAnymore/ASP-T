@@ -356,21 +356,33 @@ class CommandRepository:
 
             if directory_to_directory:
                 if not has_contents:
-                    self.copy_directory_to_directory(force, no_clobber, recursive,
+                    self.copy_directory_to_directory(force, no_clobber, recursive, verbose,
                                                      remove_dest, new=True)
                 else:
-                    self.copy_directory_to_directory(force, no_clobber, recursive,
+                    self.copy_directory_to_directory(force, no_clobber, recursive, verbose,
                                                      remove_dest, existing=True)
                 copy_attempted = True
 
             if copy_attempted:
                 break
 
-        if self.same_contents():
+        if self.same_contents(file_to_dir=file_to_directory, dir_to_dir=directory_to_directory):
             return True
         return False
 
-    def same_contents(self):
+    def same_contents(self, file_to_dir=None, dir_to_dir=None):
+        if file_to_dir:
+            was_copied = []
+            for file in self.get_filepaths_from_directory(self.dest_path):
+                was_copied.append(filecmp.cmp(self.src_path, file))
+            if True in was_copied:
+                return True
+            return False
+
+        if dir_to_dir:
+            return True if filecmp.cmpfiles(self.src_path, self.dest_path,
+                                            common=self.get_filepaths_from_directory()) else False
+
         return True if filecmp.cmp(self.src_path, self.dest_path) else False
 
     def has_contents(self):
@@ -384,7 +396,7 @@ class CommandRepository:
             return False
 
     def copy_file_to_file(self, force, no_clobber, remove_dest, verbose):
-        
+
         copy_attempted = False
         while not copy_attempted:
             if not (force and no_clobber and remove_dest and verbose):
@@ -423,7 +435,7 @@ class CommandRepository:
                 except shutil.SameFileError:
                     self.logger(level=logging.DEBUG, message='Cannot copy the file to itself')
                     break
-    
+
             elif no_clobber:
                 self.logger(level=logging.DEBUG, message='Using --no-clobber option')
                 try:
@@ -500,7 +512,7 @@ class CommandRepository:
                     tries += 1
                     continue
 
-    def copy_directory_to_directory(self, force, no_clobber, recursive,
+    def copy_directory_to_directory(self, force, no_clobber, recursive, verbose,
                                     remove_dest, new=None, existing=None):
 
         status = (new or existing) if new or existing else None
@@ -508,66 +520,82 @@ class CommandRepository:
         copy_attempted = False
 
         tries = 0
+
         while not copy_attempted:
             try:
-                files = self.get_filepaths_from_directory(self.dest_path)
+                files = self.get_filepaths_from_directory()
+                os.mkdir(self.dest_path)
 
-                if remove_dest:
+                if not (force and no_clobber):
                     for file in files:
-                        os.remove(file)
-                    remove_dest = False
-
-                if force and not no_clobber:
-                    self.logger(level=logging.DEBUG, message='Using --force option')
-                    for file in files:
-                        if not Path(file).exists():
-                            self.logger(level=logging.DEBUG, message='dest: directory does not exists ')
-                        raise FileNotFoundError
-
-                if no_clobber:
-                    self.logger(level=logging.DEBUG, message='Using --no-clobber option')
-                    if Path(self.dest_path).exists():
-                        self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}')
-                        with open(self.src_path, 'r') as src:
-                            with open(self.dest_path, 'a') as dst:
-                                shutil.copyfileobj(fsrc=src, fdst=dst)
-                        self.logger(level=logging.DEBUG, message='Copy successful')
+                        shutil.copy(file, self.dest_path)
                     copy_attempted = True
 
-                match recursive:
-                    case True:
-                        self.logger(level=logging.DEBUG, message='Using --recursive option')
-                        copy_address = shutil.copytree(src=self.src_path, dst=self.dest_path, dirs_exist_ok=status)
-                        if self.dest_path == copy_address:
-                            self.logger(level=logging.DEBUG, message='Copy successful')
-                        copy_attempted = True
+                if remove_dest:
+                    self.dest_path = self.src_path
 
-                    case False:
-                        for file in files:
-                            shutil.copy(file, self.dest_path)
+                if force and not no_clobber:
+                    self.logger(level=logging.DEBUG, message='Using --force option') if verbose else None
+                    if Path(self.dest_path).exists():
+                        self.logger(level=logging.DEBUG, message='dest: directory exists ') if verbose else None
+                        raise FileExistsError
+
+                    match recursive:
+                        case True:
+                            self.logger(level=logging.DEBUG, message='Using --recursive option') if verbose else None
+                            copy_address = shutil.copytree(src=self.src_path, dst=self.dest_path, dirs_exist_ok=status)
+                            if self.dest_path == copy_address:
+                                self.logger(level=logging.DEBUG, message='Copy successful') if verbose else None
+                            copy_attempted = True
+
+                        case False:
+                            for file in files:
+                                shutil.copy(file, self.dest_path)
+                            copy_attempted = True
+
+                if no_clobber:
+                    self.logger(level=logging.DEBUG, message='Using --no-clobber option') if verbose else None
+                    if Path(self.dest_path).exists():
+                        self.logger(level=logging.DEBUG, message=f'Copying {self.src_path} to {self.dest_path}') \
+                            if verbose else None
+                        match recursive:
+                            case True:
+                                self.logger(level=logging.DEBUG, message='Using --recursive option') \
+                                    if verbose else None
+                                for file in files:
+                                    with open(file, 'r') as src:
+                                        with open(self.dest_path, 'a') as dst:
+                                            shutil.copyfileobj(fsrc=src, fdst=dst)
+                                self.logger(level=logging.DEBUG, message='Copy successful') if verbose else None
+                            case False:
+                                for file in files:
+                                    shutil.copy(file, self.dest_path)
+
                         copy_attempted = True
 
                 if copy_address == self.dest_path:
-                    self.logger(level=logging.DEBUG, message='Copy successful')
+                    self.logger(level=logging.DEBUG, message='Copy successful') if verbose else None
                     break
 
-            except (FileExistsError, FileNotFoundError, PermissionError):
-                if FileExistsError:
-                    self.logger(level=logging.DEBUG, message='Directory already exists')
-                elif FileNotFoundError:
-                    self.logger(level=logging.DEBUG, message='Directory not found')
-                    os.mkdir(self.dest_path)
-                elif PermissionError:
-                    self.logger(level=logging.DEBUG, message='Creating dest: directory')
-                    os.mkdir(self.dest_path)
-                if tries > 3:
-                    break
-                tries += 1
+            except FileExistsError:
+                self.logger(level=logging.DEBUG, message='Directory already exists') if verbose else None
+            except FileNotFoundError:
+                self.logger(level=logging.DEBUG, message='Directory not found') if verbose else None
+                os.mkdir(self.dest_path)
                 continue
-
+            except PermissionError:
+                self.logger(level=logging.DEBUG, message='Removing existing directory') if verbose else None
+                os.remove(self.dest_path)
+                self.logger(level=logging.DEBUG, message='Creating dest: directory') if verbose else None
+                os.mkdir(self.dest_path)
+                continue
+            if tries > 3:
+                break
+            tries += 1
+            continue
 
     def get_log_file_contents(self, datestr=None, line_num=None, all_lines=None,
-                              from_date=None, program_setup=None, last=None):
+                              from_date=None, program_setup=None, last=None) -> list[str]:
 
         with open(self.log_path, 'r') as log_file:
             if all_lines:

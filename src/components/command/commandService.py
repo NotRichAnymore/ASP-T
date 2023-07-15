@@ -290,7 +290,7 @@ class CommandService:
                                                          )
             case ('directory', 'directory'):
                 copy_success = self.repository.copy_path(src_path, dest_path, directory_to_directory=True,
-                                                         ackup=backup, force=force, no_clobber=no_clobber,
+                                                         backup=backup, force=force, no_clobber=no_clobber,
                                                          recursive=recursive, remove_dest=remove_dest, suffix=suffix,
                                                          target_directory=target_directory,
                                                          no_target_directory=no_target_directory, verbose=verbose
