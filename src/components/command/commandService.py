@@ -96,13 +96,14 @@ class CommandService:
                 for token in tokens:
                     if self.validator.validate_directory(token):
                         return token
-            case 'cp':
+            case 'cp' | 'rm':
                 for token in tokens:
                     if self.validator.validate_path(token):
                         args.append(token)
                     elif self.validator.is_pathlike(token) and not token.startswith('-'):
                         args.append(token)
                 return args
+
 
     def get_options_from_format(self, opt_format, tokens):
         options = []
@@ -122,7 +123,7 @@ class CommandService:
                 if len(tokens) == 0:
                     return None
                 return self.get_options_from_format(opt_format, tokens)
-            case 'ls' | 'cp' | 'log':
+            case 'ls' | 'cp' | 'log' | 'rm':
                 return self.get_options_from_format(opt_format, tokens)
 
     def help_command(self):
@@ -300,6 +301,38 @@ class CommandService:
 
         return self.command_name, src_path, copy_success, dest_path
 
+    def get_rm_options(self):
+        recursive = None
+        prompt = None
+        ignore_warnings = None
+
+        match self.command_opts:
+            case ['-r']:
+                recursive = True
+            case ['-i']:
+                prompt = True
+            case ['-f']:
+                ignore_warnings = True
+
+        return recursive, prompt, ignore_warnings
+
+    def rm_command(self):
+        path = self.command_args[0]
+        path_type = self.validator.check_path_type([path])
+
+        if len(self.command_opts) == 0:
+            return self.command_name, path, self.repository.remove_path(path, path_type)
+
+        if not self.validator.path_exists(path):
+            raise InvalidCommandFormatError(self.command_name, self.command_format)
+
+        recursive, prompt, ignore_warnings = self.get_rm_options()
+        remove_success = self.repository.remove_path(path, path_type=path_type,
+                                                     recursive=recursive, prompt=prompt,
+                                                     ignore_warnings=ignore_warnings)
+
+        return self.command_name, path, remove_success
+
     def remove_none_values(self):
         command = []
         for ele in self.command:
@@ -312,9 +345,7 @@ class CommandService:
             case 'date':
                 self.remove_none_values()
                 return True
-            case 'uptime':
-                return True
-            case 'passwd':
+            case 'uptime' | 'passwd':
                 return True
         return False
 
@@ -461,7 +492,7 @@ class CommandService:
         match self.command_name:
             case 'date' | 'log':
                 tokens = self.sort_setter_option(tokens)
-            case 'ls' | 'cp':
+            case 'ls' | 'cp' | 'rm':
                 tokens = self.sort_path(tokens, self.command_format[2])
         self.validator.validate_command(tokens, self.command_name, self.command_format)
         self.build(tokens)
@@ -493,6 +524,8 @@ class CommandService:
                 return self.ls_command()
             case 'cp':
                 return self.cp_command()
+            case 'rm':
+                return self.rm_command()
 
     def run_command(self, command_statement, additional_details):
         if not self.parse(command_statement.split(' ')):

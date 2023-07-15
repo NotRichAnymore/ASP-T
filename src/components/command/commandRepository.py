@@ -104,6 +104,34 @@ class CommandRepository:
     def get_all_help_command_details(self):
         return self.read_help_command_details()
 
+    def get_log_file_contents(self, datestr=None, line_num=None, all_lines=None,
+                              from_date=None, program_setup=None, last=None) -> list[str]:
+
+        with open(self.log_path, 'r') as log_file:
+            if all_lines:
+                return log_file.readlines()
+
+            if from_date and datestr:
+                lines = log_file.readlines()
+                for line in lines:
+                    if datestr in line:
+                        return lines[lines.index(line):]
+
+            if program_setup:
+                lines = log_file.readlines()
+                for line in lines:
+                    if 'Starting Program Setup' in line:
+                        start = lines.index(line)
+                    elif 'Ending Program Setup' in line:
+                        end = lines.index(line)
+
+                return lines[start:end]
+
+            if last and line_num:
+                lines_from_file = more_itertools.ilen(line for line in log_file.read())
+                lines_to_display = lines_from_file - (lines_from_file - line_num)
+                return log_file.readlines()[lines_to_display:]
+
     def get_directory_and_filenames(self, path):
         directories = []
         files = []
@@ -594,30 +622,33 @@ class CommandRepository:
             tries += 1
             continue
 
-    def get_log_file_contents(self, datestr=None, line_num=None, all_lines=None,
-                              from_date=None, program_setup=None, last=None) -> list[str]:
+    def remove_path(self, path: str, path_type: str,
+                    recursive: bool = None, prompt: bool = None, ignore_warnings: bool = None) -> bool:
+        remove_attempted = False
+        while not remove_attempted:
+            try:
+                match path_type:
+                    case ['file']:
+                        os.remove(path)
+                        remove_attempted = True
 
-        with open(self.log_path, 'r') as log_file:
-            if all_lines:
-                return log_file.readlines()
+                    case ['directory']:
+                        if recursive:
+                            os.removedirs(path)
+                            remove_attempted = True
 
-            if from_date and datestr:
-                lines = log_file.readlines()
-                for line in lines:
-                    if datestr in line:
-                        return lines[lines.index(line):]
+                        for file in self.get_filepaths_from_directory(path):
+                            os.remove(file)
+                        os.rmdir(path)
+                        remove_attempted = True
+            except OSError as e:
+                if ignore_warnings and path_type == 'file':
+                    return False
+                if e.errno == 2:
+                    return False
+                continue
 
-            if program_setup:
-                lines = log_file.readlines()
-                for line in lines:
-                    if 'Starting Program Setup' in line:
-                        start = lines.index(line)
-                    elif 'Ending Program Setup' in line:
-                        end = lines.index(line)
 
-                return lines[start:end]
-
-            if last and line_num:
-                lines_from_file = more_itertools.ilen(line for line in log_file.read())
-                lines_to_display = lines_from_file - (lines_from_file - line_num)
-                return log_file.readlines()[lines_to_display:]
+        if not Path(path).exists():
+            return True
+        return False

@@ -83,6 +83,9 @@ class CommandValidator:
     def is_pathlike(self, string):
         return True if isinstance(string, PathLike) else False
 
+    def path_exists(self, path):
+        return True if Path(path).exists() else False
+
 
 
 

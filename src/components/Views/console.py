@@ -227,12 +227,27 @@ class Console:
                     response = copy_success
                     window[f'output_screen{self.suffix}'].print(copy_success, text_color='Green')
                 elif not response[1]:
-                    copy_fail = f'Failed to copy {response[0]} to {response[2]}'
+                    copy_fail = f'Failed to remove {response[0]} to {response[2]}'
                     response = copy_fail
                     window[f'output_screen{self.suffix}'].print(copy_fail, text_color='Dark Red')
 
                 self.log_command(command_args, response, write=True)
                 return 'continue'
+            
+            elif response[0] == 'rm':
+                response = response[1:]
+                if response[1]:
+                    remove_success = f'{response[0]} was removed  successfully'
+                    response = remove_success
+                    window[f'output_screen{self.suffix}'].print(remove_success, text_color='Green')
+                elif not response[1]:
+                    remove_fail = f'Failed to remove {response[0]}'
+                    response = remove_fail
+                    window[f'output_screen{self.suffix}'].print(remove_fail, text_color='Dark Red')
+
+                self.log_command(command_args, response, write=True)
+                return 'continue'
+                    
 
             elif isinstance(response, list):
                 for line in response:
